@@ -25,7 +25,7 @@
   --good:#34C759;
   --warn:#FF9F0A;
   --bad:#FF3B30;
-  --nav-h:64px;
+  --nav-h:58px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
   --radius-l:20px;
@@ -72,7 +72,7 @@ input,textarea,select{font-family:inherit;}
   margin:0 auto;
   min-height:100%;
   position:relative;
-  padding-bottom:calc(var(--nav-h) + var(--safe-b) + 12px);
+  padding-bottom:calc(var(--nav-h) + var(--safe-b) + 34px);
 }
 
 /* ==========================================================================
@@ -86,15 +86,26 @@ input,textarea,select{font-family:inherit;}
   -webkit-backdrop-filter:blur(20px) saturate(160%);
   border-bottom:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-between; gap:10px;
+  transition:max-width .35s cubic-bezier(.4,0,.2,1), margin .35s cubic-bezier(.4,0,.2,1),
+             border-radius .35s cubic-bezier(.4,0,.2,1), padding .35s cubic-bezier(.4,0,.2,1),
+             box-shadow .35s;
 }
 .topbar h1{
   font-size:20px; font-weight:700; margin:0; letter-spacing:-0.3px;
+  transition:font-size .35s, text-align .35s;
 }
-.topbar .sub{font-size:12px; color:var(--text-secondary); margin-top:1px; font-weight:500;}
+.topbar .sub{font-size:12px; color:var(--text-secondary); margin-top:1px; font-weight:500; transition:opacity .2s;}
 .avatar-chip{
   display:flex; align-items:center; gap:8px;
   background:var(--surface-solid); border:1px solid var(--border);
   padding:5px 10px 5px 5px; border-radius:999px;
+  transition:opacity .2s;
+}
+.head-actions{display:flex; align-items:center; gap:6px; transition:opacity .2s;}
+.fav-header-btn{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--surface-solid); border:1px solid var(--border);
+  color:var(--bad); display:flex; align-items:center; justify-content:center; cursor:pointer;
 }
 .avatar-dot{
   width:26px;height:26px;border-radius:50%;
@@ -105,6 +116,26 @@ input,textarea,select{font-family:inherit;}
 .admin-badge{
   font-size:10px; font-weight:700; color:var(--accent);
   background:var(--accent-soft); padding:2px 6px; border-radius:6px; letter-spacing:0.2px;
+}
+
+/* Топбар в капсулу при скролі */
+.topbar.scrolled{
+  max-width:230px;
+  margin:8px auto 0;
+  border-radius:999px;
+  border:1px solid var(--border);
+  padding:9px 20px;
+  box-shadow:var(--shadow);
+  justify-content:center;
+}
+.topbar.scrolled .sub,
+.topbar.scrolled .avatar-chip,
+.topbar.scrolled .head-actions{
+  display:none;
+  opacity:0;
+}
+.topbar.scrolled h1{
+  font-size:13px; text-align:center; width:100%; font-weight:800; letter-spacing:0.1px;
 }
 
 /* ==========================================================================
@@ -121,10 +152,10 @@ input,textarea,select{font-family:inherit;}
 .banner-card{
   scroll-snap-align:start;
   flex:0 0 84%;
-  border-radius:var(--radius-m);
+  border-radius:12px;
   overflow:hidden;
   position:relative;
-  min-height:110px;
+  min-height:140px;
   background:var(--surface-solid);
   border:1px solid var(--border);
   cursor:pointer;
@@ -134,20 +165,25 @@ input,textarea,select{font-family:inherit;}
 }
 .banner-card .scrim{
   position:absolute; inset:0;
-  background:linear-gradient(0deg, rgba(0,0,0,0.66) 0%, rgba(0,0,0,0.05) 60%);
+  background:linear-gradient(0deg, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.28) 50%, rgba(0,0,0,0.16) 100%);
 }
 .banner-card .banner-text{
   position:absolute; left:12px; right:12px; bottom:10px; color:#fff;
 }
-.banner-card .banner-text .t{font-weight:700; font-size:14px; margin:0 0 2px;}
-.banner-card .banner-text .d{font-size:11px; opacity:0.85; margin:0;}
+.banner-card .banner-text .t{font-weight:700; font-size:14px; margin:0 0 2px; text-shadow:0 1px 3px rgba(0,0,0,0.4);}
+.banner-card .banner-text .d{font-size:11px; opacity:0.9; margin:0; text-shadow:0 1px 3px rgba(0,0,0,0.4);}
 .banner-empty{
-  flex:1; border-radius:var(--radius-m); border:1px dashed var(--border);
+  flex:1; border-radius:12px; border:1px dashed var(--border);
   padding:16px; text-align:center; color:var(--text-tertiary); font-size:12px;
 }
 
 /* Category chips */
-.chip-row{display:flex; gap:6px; overflow-x:auto; margin:0 -14px 10px; padding:0 14px;}
+.chip-row{
+  display:flex; gap:6px; overflow-x:auto; margin:0 -14px 10px; padding:0 14px;
+  transition:opacity .25s, max-height .25s, margin .25s;
+  max-height:60px; opacity:1;
+}
+.chip-row.hide-scroll{ opacity:0; max-height:0; margin-bottom:0; overflow:hidden; pointer-events:none; }
 .chip{
   flex:0 0 auto; padding:6px 12px; border-radius:999px;
   background:var(--surface-solid); border:1px solid var(--border);
@@ -156,51 +192,57 @@ input,textarea,select{font-family:inherit;}
 }
 .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
 
-/* Compact Item card */
-.item-grid{display:flex; flex-direction:column; gap:10px;}
-.item-card{
-  display:flex;
-  gap:10px;
+/* Compact 3-col item grid */
+.item-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px;
+}
+.item-card-mini{
   background:var(--surface-solid);
   border:1px solid var(--border);
-  border-radius:var(--radius-m);
-  overflow:hidden;
-  padding:10px;
-  box-shadow:var(--shadow);
-}
-.item-media{
-  position:relative;
-  width:110px; height:110px;
-  flex:0 0 110px;
   border-radius:var(--radius-s);
   overflow:hidden;
-  background:var(--accent-soft);
+  box-shadow:var(--shadow);
+  cursor:pointer;
 }
-.item-media img{width:100%; height:100%; object-fit:cover; display:block;}
-.item-media .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);}
-.ttl-ring{position:absolute; top:4px; right:4px; width:30px; height:30px;}
-.ttl-ring svg{transform:rotate(-90deg);}
-.ttl-ring .bg{stroke:rgba(0,0,0,0.3);}
-.ttl-ring .fg{stroke:#fff; transition:stroke-dashoffset 1s linear;}
-.ttl-ring .txt{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-size:8px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.6);
+.mini-media{
+  position:relative; width:100%; aspect-ratio:1/1;
+  background:var(--accent-soft); overflow:hidden;
 }
-.cat-pill{
-  position:absolute; bottom:4px; left:4px; max-width:102px;
-  background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
-  color:#fff; font-size:9px; font-weight:600; padding:2px 6px; border-radius:999px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+.mini-media img{width:100%; height:100%; object-fit:cover; display:block;}
+.mini-media .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);}
+.mini-ttl{
+  position:absolute; top:5px; left:5px;
+  background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
+  color:#fff; font-size:8px; font-weight:700; padding:2px 5px; border-radius:999px; z-index:2;
 }
-.item-body{
-  flex:1; min-width:0; display:flex; flex-direction:column; justify-content:space-between;
+.mini-cat{
+  position:absolute; bottom:5px; left:5px; max-width:calc(100% - 10px);
+  background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
+  color:#fff; font-size:8px; font-weight:600; padding:2px 5px; border-radius:999px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2;
 }
-.item-title{font-size:14px; font-weight:700; margin:0 0 2px; letter-spacing:-0.2px; line-height:1.2;
-  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}
-.item-desc{font-size:12px; color:var(--text-secondary); margin:0 0 4px; line-height:1.3;
-  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}
-.item-price{font-size:14px; font-weight:800; color:var(--accent); margin:0 0 4px;}
-.item-actions{display:flex; flex-direction:column; gap:4px; margin-top:2px;}
+.mini-heart{
+  position:absolute; top:5px; right:5px; z-index:2;
+  width:23px; height:23px; border-radius:50%;
+  background:rgba(0,0,0,0.4); backdrop-filter:blur(3px);
+  border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff;
+}
+.mini-heart svg{width:13px; height:13px;}
+.mini-title{
+  font-size:11.5px; font-weight:700; margin:6px 6px 2px; line-height:1.25;
+  min-height:28px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.mini-price{font-size:11px; font-weight:800; color:var(--accent); margin:0 6px 7px;}
+
+.load-more-wrap{margin-top:14px; display:flex; justify-content:center;}
+.load-more-btn{
+  padding:10px 26px; border-radius:999px; border:1px solid var(--border);
+  background:var(--surface-solid); color:var(--accent); font-weight:700; font-size:13px; cursor:pointer;
+}
+
 .btn{
   width:100%; display:flex; align-items:center; justify-content:center; gap:5px;
   padding:6px 8px; border-radius:var(--radius-s); border:none; cursor:pointer;
@@ -209,8 +251,6 @@ input,textarea,select{font-family:inherit;}
 .btn-outline{background:var(--accent-soft); color:var(--accent);}
 .btn-solid{background:var(--accent); color:#fff;}
 .btn-solid:active,.btn-outline:active{opacity:0.7;}
-.item-meta{display:flex; align-items:center; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--text-tertiary);}
-.item-meta span{display:flex; align-items:center; gap:3px;}
 
 .empty-state{
   text-align:center; padding:36px 16px; color:var(--text-secondary);
@@ -218,6 +258,44 @@ input,textarea,select{font-family:inherit;}
 .empty-state svg{margin-bottom:8px; opacity:0.5;}
 .empty-state .t{font-weight:700; color:var(--text); margin:0 0 4px;}
 .empty-state .d{font-size:12px; margin:0;}
+
+/* Item full-info modal */
+.item-modal-overlay{
+  position:fixed; inset:0; z-index:60; background:var(--bg);
+  display:none; flex-direction:column;
+}
+.item-modal-overlay.active{display:flex;}
+.item-modal-head{
+  display:flex; align-items:center; justify-content:flex-end;
+  padding:calc(var(--safe-t) + 10px) 14px 4px;
+}
+.item-modal-body{flex:1; overflow-y:auto; padding:0 16px 26px;}
+.gallery{
+  position:relative; width:100%; aspect-ratio:1/1;
+  border-radius:var(--radius-m); overflow:hidden; background:var(--accent-soft); margin-bottom:14px;
+}
+.gallery-track{display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory;}
+.gallery-track img{flex:0 0 100%; width:100%; height:100%; object-fit:cover; scroll-snap-align:start; display:block;}
+.gallery-dots{position:absolute; bottom:8px; left:50%; transform:translateX(-50%); display:flex; gap:4px;}
+.gallery-dots span{width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.5);}
+.gallery-dots span.active{background:#fff;}
+.modal-heart-row{display:flex; justify-content:flex-end; margin-bottom:6px;}
+.heart-btn-lg{
+  width:38px;height:38px;border-radius:50%; background:var(--surface-solid); border:1px solid var(--border);
+  color:var(--bad); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.heart-btn-lg svg{width:19px;height:19px;}
+.modal-title{font-size:19px; font-weight:800; margin:0 0 6px; letter-spacing:-0.3px;}
+.modal-price{font-size:17px; font-weight:800; color:var(--accent); margin:0 0 8px;}
+.modal-cat-pill{
+  display:inline-block; background:var(--accent-soft); color:var(--accent);
+  font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; margin-bottom:12px;
+}
+.modal-desc{font-size:13px; color:var(--text-secondary); line-height:1.55; margin:0 0 16px; white-space:pre-wrap;}
+.modal-meta-row{display:flex; gap:16px; margin-bottom:18px; font-size:11px; color:var(--text-tertiary);}
+.modal-meta-row span{display:flex; align-items:center; gap:4px;}
+.modal-actions{display:flex; gap:8px;}
+.modal-actions .btn{padding:13px; font-size:13px; border-radius:var(--radius-m);}
 
 /* Chat view */
 .chat-list{display:flex; flex-direction:column; gap:8px;}
@@ -339,17 +417,24 @@ input,textarea,select{font-family:inherit;}
   display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;
 }
 
-/* Bottom nav */
+/* Bottom bar: capsule nav + separate round search button */
+.bottom-bar-wrap{
+  position:fixed; left:0; right:0; bottom:calc(10px + var(--safe-b)); z-index:30;
+  max-width:560px; margin:0 auto; padding:0 14px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  transition:all .3s;
+}
 .bottom-nav{
-  position:fixed; left:0; right:0; bottom:0; z-index:30;
-  max-width:560px; margin:0 auto;
-  height:calc(var(--nav-h) + var(--safe-b));
-  padding-bottom:var(--safe-b);
+  flex:1 1 auto; max-width:420px;
+  height:var(--nav-h);
   background:var(--surface-strong);
   backdrop-filter:blur(20px) saturate(160%);
   -webkit-backdrop-filter:blur(20px) saturate(160%);
-  border-top:1px solid var(--border);
+  border:1px solid var(--border);
+  border-radius:999px;
   display:flex; align-items:stretch;
+  box-shadow:var(--shadow);
+  padding:0 2px;
 }
 .nav-btn{
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -357,17 +442,48 @@ input,textarea,select{font-family:inherit;}
 }
 .nav-btn.active{color:var(--accent);}
 .nav-btn span{font-size:10px; font-weight:600;}
+.nav-btn-create .icon-circle{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--accent); color:#fff;
+  display:flex;align-items:center;justify-content:center; margin-bottom:1px;
+}
+.nav-btn-create span:last-child{font-size:10px; font-weight:600; color:var(--text-tertiary);}
 
-.fab-search{
-  position:fixed; right:calc(50% - 264px); bottom:calc(var(--nav-h) + var(--safe-b) + 14px);
-  width:48px; height:48px; border-radius:50%;
-  background:var(--accent); color:#fff; border:none;
+.search-circle-btn{
+  width:52px; height:52px; border-radius:50%; flex:0 0 auto;
+  background:var(--surface-strong);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--border);
   display:flex; align-items:center; justify-content:center;
-  box-shadow:0 4px 14px rgba(0,0,0,0.22); cursor:pointer; z-index:31;
+  color:var(--accent); box-shadow:var(--shadow); cursor:pointer;
 }
-@media (max-width:590px){
-  .fab-search{right:14px;}
+
+/* Scroll-to-top arrow (left side, appears on upward swipe) */
+.scroll-top-btn{
+  position:fixed; left:14px; bottom:calc(var(--nav-h) + var(--safe-b) + 24px); z-index:35;
+  width:40px; height:40px; border-radius:50%;
+  background:var(--surface-strong);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--border); box-shadow:var(--shadow);
+  display:flex; align-items:center; justify-content:center; color:var(--accent);
+  opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .25s, transform .25s;
 }
+.scroll-top-btn.show{opacity:1; pointer-events:auto; transform:translateY(0);}
+
+/* Filter pill fab (categories collapse into this on scroll) */
+.filter-fab{
+  position:fixed; right:14px; bottom:calc(var(--nav-h) + var(--safe-b) + 24px); z-index:35;
+  display:flex; align-items:center; gap:6px;
+  padding:10px 16px; border-radius:999px;
+  background:var(--accent); color:#fff; font-size:12px; font-weight:700;
+  border:none; box-shadow:var(--shadow); cursor:pointer;
+  opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .25s, transform .25s;
+}
+.filter-fab.show{opacity:1; pointer-events:auto; transform:translateY(0);}
 
 /* Search overlay */
 .search-overlay{
@@ -383,6 +499,21 @@ input,textarea,select{font-family:inherit;}
 .search-head .field{flex:1; margin:0; display:flex; align-items:center; gap:8px; padding:9px 12px;}
 .search-close{background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:4px;}
 .search-results{padding:12px 14px; overflow-y:auto; flex:1;}
+
+/* Filter overlay */
+.filter-overlay{
+  position:fixed; inset:0; z-index:55; background:var(--bg);
+  display:none; flex-direction:column;
+}
+.filter-overlay.active{display:flex;}
+.filter-overlay .search-head{border-bottom:1px solid var(--border);}
+.filter-overlay .search-head p{font-weight:800; font-size:16px; margin:0; flex:1;}
+.filter-list{padding:14px; display:flex; flex-direction:column; gap:8px; overflow-y:auto;}
+.filter-opt{
+  padding:14px; border-radius:var(--radius-m); background:var(--surface-solid);
+  border:1px solid var(--border); font-weight:700; font-size:14px; cursor:pointer;
+}
+.filter-opt.active{background:var(--accent); color:#fff; border-color:var(--accent);}
 
 /* Toast */
 .toast{
@@ -400,14 +531,17 @@ input,textarea,select{font-family:inherit;}
 <body>
 <div id="app">
 
-  <div class="topbar">
+  <div class="topbar" id="topbar">
     <div>
-      <h1>Дошка</h1>
+      <h1 id="topbarTitle">Дошка</h1>
       <p class="sub" id="topbarSub">Оголошення поруч</p>
     </div>
-    <div class="avatar-chip" id="avatarChip">
-      <div class="avatar-dot" id="avatarDot">?</div>
-      <span id="adminBadgeSlot"></span>
+    <div class="head-actions">
+      <button class="fav-header-btn" id="favHeaderBtn"></button>
+      <div class="avatar-chip" id="avatarChip">
+        <div class="avatar-dot" id="avatarDot">?</div>
+        <span id="adminBadgeSlot"></span>
+      </div>
     </div>
   </div>
 
@@ -415,6 +549,7 @@ input,textarea,select{font-family:inherit;}
     <div class="banner-rail" id="bannerRail"></div>
     <div class="chip-row" id="chipRow"></div>
     <div class="item-grid" id="itemGrid"></div>
+    <div class="load-more-wrap" id="loadMoreWrap"></div>
   </section>
 
   <section class="view" id="view-chat">
@@ -462,28 +597,60 @@ input,textarea,select{font-family:inherit;}
   <div class="search-results" id="searchResults"></div>
 </div>
 
-<button class="fab-search" id="fabSearch">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<div class="search-overlay" id="favoritesOverlay">
+  <div class="search-head">
+    <p style="font-weight:800;font-size:16px;margin:0;flex:1;">Обране</p>
+    <button class="search-close" id="favoritesClose">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="search-results" id="favoritesResults"></div>
+</div>
+
+<div class="filter-overlay" id="filterOverlay">
+  <div class="search-head">
+    <p>Категорія</p>
+    <button class="search-close" id="filterClose">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="filter-list" id="filterList"></div>
+</div>
+
+<div class="item-modal-overlay" id="itemModalOverlay"></div>
+
+<button class="scroll-top-btn" id="scrollTopBtn">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
 </button>
 
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-view="home">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-    <span>Головна</span>
+<button class="filter-fab" id="filterFab">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4"/></svg>
+  Фільтр
+</button>
+
+<div class="bottom-bar-wrap" id="bottomBarWrap">
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <span>Головна</span>
+    </button>
+    <button class="nav-btn" data-view="chat">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.36 7.57L3 20l1.05-5.28A8.5 8.5 0 1121 11.5z"/></svg>
+      <span>Чат</span>
+    </button>
+    <button class="nav-btn nav-btn-create" data-view="create">
+      <span class="icon-circle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+      <span>Створити</span>
+    </button>
+    <button class="nav-btn" data-view="profile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Кабінет</span>
+    </button>
+  </nav>
+  <button class="search-circle-btn" id="fabSearch">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
   </button>
-  <button class="nav-btn" data-view="chat">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.36 7.57L3 20l1.05-5.28A8.5 8.5 0 1121 11.5z"/></svg>
-    <span>Чат</span>
-  </button>
-  <button class="nav-btn" data-view="create">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    <span>Створити</span>
-  </button>
-  <button class="nav-btn" data-view="profile">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Кабінет</span>
-  </button>
-</nav>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -503,17 +670,19 @@ const CONFIG = {
   WEEK_MS: 7 * 24 * 60 * 60 * 1000,          // 1 тиждень
   POST_TTL_MS: 24 * 60 * 60 * 1000,          // Час життя оголошення: 24 години
   REFRESH_MS: 25000,
+  PAGE_SIZE: 48,                             // 16*3 карток на "сторінку"
+  MAX_PHOTOS: 3,
   DEFAULT_CATEGORIES: ["Товари","Послуги","Вакансії","Нерухомість","Інше"]
 };
 const isConfigured = (url)=> !!url && url.indexOf("PASTE_") !== 0;
 
 /* ==========================================================================
-   ФУНКЦІЯ ЗАВАНТАЖЕННЯ НА IMGBB (Глобальна)
+   ЗАВАНТАЖЕННЯ ФОТО НА IMGBB (одне фото — для банерів)
    ========================================================================== */
 window.uploadToImgBB = async function(fileInput, hiddenInputId, statusId) {
   const file = fileInput.files[0];
   if (!file) return;
-  
+
   const statusText = document.getElementById(statusId);
   const hiddenUrlInput = document.getElementById(hiddenInputId);
 
@@ -542,6 +711,49 @@ window.uploadToImgBB = async function(fileInput, hiddenInputId, statusId) {
     statusText.innerText = "❌ Помилка мережі. Спробуйте ще раз.";
     statusText.style.color = "var(--bad)";
     console.error("ImgBB Upload Error:", error);
+  }
+};
+
+/* ==========================================================================
+   ЗАВАНТАЖЕННЯ ДО 3 ФОТО (для оголошень)
+   ========================================================================== */
+window.uploadMultipleToImgBB = async function(fileInput, hiddenInputId, statusId) {
+  const files = Array.from(fileInput.files || []).slice(0, CONFIG.MAX_PHOTOS);
+  if (!files.length) return;
+
+  const statusText = document.getElementById(statusId);
+  const hiddenUrlInput = document.getElementById(hiddenInputId);
+
+  statusText.innerText = "⏳ Завантаження фото (0/" + files.length + ")…";
+  statusText.style.color = "var(--accent)";
+
+  const urls = [];
+  for (let i = 0; i < files.length; i++){
+    try {
+      const formData = new FormData();
+      formData.append("image", files[i]);
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        urls.push(data.data.url);
+        statusText.innerText = "⏳ Завантаження фото (" + urls.length + "/" + files.length + ")…";
+      } else {
+        statusText.innerText = "❌ Помилка: " + data.error.message;
+        statusText.style.color = "var(--bad)";
+      }
+    } catch (error) {
+      statusText.innerText = "❌ Помилка мережі. Спробуйте ще раз.";
+      statusText.style.color = "var(--bad)";
+      console.error("ImgBB Upload Error:", error);
+    }
+  }
+  hiddenUrlInput.value = urls.join("|");
+  if (urls.length) {
+    statusText.innerText = "✅ Завантажено фото: " + urls.length + " з " + files.length;
+    statusText.style.color = "var(--good)";
   }
 };
 
@@ -580,6 +792,7 @@ const DISPLAY_NAME = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(
    ========================================================================== */
 const savedCats = JSON.parse(localStorage.getItem("custom_categories_v1") || "null");
 const savedBanners = JSON.parse(localStorage.getItem("localBanners_v1") || "[]");
+const savedFavorites = JSON.parse(localStorage.getItem("favorites_v1") || "[]");
 
 const state = {
   banners: savedBanners,
@@ -588,10 +801,12 @@ const state = {
   categories: savedCats || CONFIG.DEFAULT_CATEGORIES,
   localItems: JSON.parse(localStorage.getItem("localItems_v1") || "[]"),
   clickLog: JSON.parse(localStorage.getItem("clickLog_v1") || "[]"),
+  favorites: new Set(savedFavorites),
   isAdmin: false,
   activeView: "home",
   activeCategory: "Усі",
-  newCatChoice: (savedCats || CONFIG.DEFAULT_CATEGORIES)[0]
+  newCatChoice: (savedCats || CONFIG.DEFAULT_CATEGORIES)[0],
+  visibleCount: CONFIG.PAGE_SIZE
 };
 
 let isFirstLoad = true; // Запобіжник для скидання форми
@@ -601,6 +816,9 @@ function persistLocal(){
   localStorage.setItem("clickLog_v1", JSON.stringify(state.clickLog));
   localStorage.setItem("custom_categories_v1", JSON.stringify(state.categories));
   localStorage.setItem("localBanners_v1", JSON.stringify(state.banners));
+}
+function persistFavorites(){
+  localStorage.setItem("favorites_v1", JSON.stringify(Array.from(state.favorites)));
 }
 
 /* ==========================================================================
@@ -617,7 +835,9 @@ const ICONS = {
   empty: '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
   trash: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
   shield: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-  lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>'
+  lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>',
+  heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>'
 };
 
 /* ==========================================================================
@@ -657,7 +877,7 @@ async function loadAll(){
   state.isAdmin = state.admins.some(function(a){
     return String(a.telegram_id || "").trim() === CURRENT_UID;
   });
-  
+
   if (isFirstLoad) {
     renderAll();
     isFirstLoad = false;
@@ -681,6 +901,10 @@ function normalizeItem(raw){
     clicks_phone: Number(raw.clicks_phone || raw.clicks || 0) || 0,
     clicks_tg: Number(raw.clicks_tg || 0) || 0
   };
+}
+
+function getImages(item){
+  return String(item.img || "").split("|").map(function(s){ return s.trim(); }).filter(Boolean);
 }
 
 /* ==========================================================================
@@ -727,6 +951,13 @@ async function deleteItemAdmin(item){
   showToast("Оголошення видалено");
   renderAll();
 }
+
+function toggleFavorite(id){
+  if (state.favorites.has(id)) state.favorites.delete(id);
+  else state.favorites.add(id);
+  persistFavorites();
+}
+function isFav(id){ return state.favorites.has(id); }
 
 /* ==========================================================================
    6. ДОПОМІЖНІ ФУНКЦІЇ ТА ЛІМІТИ
@@ -798,6 +1029,7 @@ function renderTopbar(){
     ? '<span class="admin-badge">Адмін</span>' : "";
   document.getElementById("topbarSub").textContent =
     "Оголошення поруч · " + state.items.filter(isAlive).length + " активних";
+  document.getElementById("favHeaderBtn").innerHTML = ICONS.heart;
 }
 
 function renderBanners(){
@@ -833,97 +1065,77 @@ function renderChips(){
   row.querySelectorAll(".chip").forEach(function(chip){
     chip.addEventListener("click", function(){
       state.activeCategory = chip.dataset.cat;
+      state.visibleCount = CONFIG.PAGE_SIZE;
       renderChips();
       renderItemGrid();
     });
   });
 }
 
-function itemCardHtml(item){
+function itemCardMiniHtml(item){
+  const imgs = getImages(item);
+  const thumb = imgs[0];
   const alive = isAlive(item);
-  const ring = alive ? ringHtml(item) : "";
-  return '<div class="item-card" data-id="'+esc(item.id)+'">' +
-    '<div class="item-media">' +
-      (item.img
-        ? '<img src="'+esc(item.img)+'" alt="" loading="lazy">'
-        : '<div class="noimg">'+ICONS.image+'</div>') +
-      '<div class="cat-pill">'+esc(item.category)+'</div>' +
-      ring +
+  return '<div class="item-card-mini" data-id="'+esc(item.id)+'">' +
+    '<div class="mini-media">' +
+      (thumb ? '<img src="'+esc(thumb)+'" alt="" loading="lazy">' : '<div class="noimg">'+ICONS.image+'</div>') +
+      (alive ? '<div class="mini-ttl">'+fmtClock(timeLeftMs(item))+'</div>' : '') +
+      '<button class="mini-heart" data-heart="'+esc(item.id)+'">'+(isFav(item.id)?ICONS.heartFilled:ICONS.heart)+'</button>' +
+      '<div class="mini-cat">'+esc(item.category)+'</div>' +
     '</div>' +
-    '<div class="item-body">' +
-      '<div>' +
-        '<p class="item-title">'+esc(item.title)+'</p>' +
-        (item.desc ? '<p class="item-desc">'+esc(item.desc)+'</p>' : '') +
-        (item.price ? '<p class="item-price">'+esc(item.price)+'</p>' : '') +
-      '</div>' +
-      '<div class="item-actions">' +
-        '<button class="btn btn-outline" data-act="phone">'+ICONS.phone+' Показати номер</button>' +
-        '<button class="btn btn-solid" data-act="tg">'+ICONS.send+' Telegram</button>' +
-      '</div>' +
-      '<div class="item-meta">' +
-        '<span>'+ICONS.clock+' '+timeAgo(item.created_at)+'</span>' +
-        '<span>'+ICONS.clicks+' '+(item.clicks_phone+item.clicks_tg)+'</span>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
-}
-
-function ringHtml(item){
-  const pct = Math.max(0, timeLeftMs(item) / CONFIG.POST_TTL_MS);
-  const r = 12, c = 2*Math.PI*r;
-  const offset = c * (1-pct);
-  return '<div class="ttl-ring" data-ttl="'+item.id+'">' +
-    '<svg width="30" height="30" viewBox="0 0 30 30">' +
-      '<circle class="bg" cx="15" cy="15" r="'+r+'" fill="none" stroke-width="2.5"/>' +
-      '<circle class="fg" cx="15" cy="15" r="'+r+'" fill="none" stroke-width="2.5" ' +
-        'stroke-dasharray="'+c+'" stroke-dashoffset="'+offset+'" stroke-linecap="round"/>' +
-    '</svg>' +
-    '<div class="txt">'+fmtClock(timeLeftMs(item))+'</div>' +
+    '<p class="mini-title">'+esc(item.title)+'</p>' +
+    (item.price ? '<p class="mini-price">'+esc(item.price)+'</p>' : '') +
   '</div>';
 }
 
 function bindItemCardActions(container){
-  container.querySelectorAll(".item-card").forEach(function(card){
+  container.querySelectorAll(".item-card-mini").forEach(function(card){
     const item = state.items.find(function(i){ return i.id === card.dataset.id; });
     if (!item) return;
-    const phoneBtn = card.querySelector('[data-act="phone"]');
-    const tgBtn = card.querySelector('[data-act="tg"]');
-    if (phoneBtn) phoneBtn.addEventListener("click", function(){
-      logClick(item, "phone");
-      if (item.phone) {
-        phoneBtn.innerHTML = ICONS.phone + ' <span class="phone-reveal">'+esc(item.phone)+'</span>';
-      } else {
-        showToast("Номер не вказано продавцем");
-      }
+    card.addEventListener("click", function(e){
+      if (e.target.closest(".mini-heart")) return;
+      openItemModal(item);
     });
-    if (tgBtn) tgBtn.addEventListener("click", function(){
-      logClick(item, "tg");
-      recordConversation(item);
-      const uname = (item.username || "").replace("@","");
-      if (uname) {
-        const link = "https://t.me/" + uname;
-        if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, "_blank");
-      } else {
-        showToast("Контакт Telegram не вказано");
-      }
-    });
+    const heartBtn = card.querySelector(".mini-heart");
+    if (heartBtn) {
+      heartBtn.addEventListener("click", function(e){
+        e.stopPropagation();
+        toggleFavorite(item.id);
+        heartBtn.innerHTML = isFav(item.id) ? ICONS.heartFilled : ICONS.heart;
+      });
+    }
   });
 }
 
 function renderItemGrid(){
   const grid = document.getElementById("itemGrid");
+  const loadWrap = document.getElementById("loadMoreWrap");
   const list = state.items
     .filter(isAlive)
     .filter(function(i){ return state.activeCategory === "Усі" || i.category === state.activeCategory; })
     .sort(function(a,b){ return b.created_at - a.created_at; });
+
   if (!list.length){
-    grid.innerHTML = '<div class="empty-state">' + ICONS.empty +
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + ICONS.empty +
       '<p class="t">Поки що порожньо</p>' +
       '<p class="d">У цій категорії немає активних оголошень</p></div>';
+    loadWrap.innerHTML = "";
     return;
   }
-  grid.innerHTML = list.map(function(i){ return itemCardHtml(i); }).join("");
+
+  const visible = list.slice(0, state.visibleCount);
+  grid.innerHTML = visible.map(function(i){ return itemCardMiniHtml(i); }).join("");
   bindItemCardActions(grid);
+
+  if (list.length > state.visibleCount){
+    loadWrap.innerHTML = '<button class="load-more-btn" id="loadMoreBtn">Ще</button>';
+    document.getElementById("loadMoreBtn").addEventListener("click", function(){
+      state.visibleCount += CONFIG.PAGE_SIZE;
+      renderItemGrid();
+    });
+  } else {
+    loadWrap.innerHTML = "";
+  }
 }
 
 function recordConversation(item){
@@ -934,6 +1146,85 @@ function recordConversation(item){
     list.unshift({ item_id: item.id, title: item.title, username: item.username, ts: Date.now() });
     localStorage.setItem(key, JSON.stringify(list.slice(0,30)));
   }
+}
+
+/* ==========================================================================
+   7b. ПОВНА КАРТКА (МОДАЛКА)
+   ========================================================================== */
+const CLOSE_SVG = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+function openItemModal(item){
+  const overlay = document.getElementById("itemModalOverlay");
+  const imgs = getImages(item);
+
+  const galleryHtml = imgs.length
+    ? '<div class="gallery"><div class="gallery-track" id="galleryTrack">' +
+        imgs.map(function(u){ return '<img src="'+esc(u)+'" alt="">'; }).join("") +
+      '</div>' +
+      (imgs.length > 1
+        ? '<div class="gallery-dots">' + imgs.map(function(_,i){ return '<span class="'+(i===0?"active":"")+'"></span>'; }).join("") + '</div>'
+        : '') +
+    '</div>'
+    : '<div class="gallery"><div class="noimg" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);">'+ICONS.image+'</div></div>';
+
+  overlay.innerHTML =
+    '<div class="item-modal-head"><button class="search-close" id="modalClose">'+CLOSE_SVG+'</button></div>' +
+    '<div class="item-modal-body">' +
+      galleryHtml +
+      '<div class="modal-heart-row"><button class="heart-btn-lg" id="modalHeart">'+(isFav(item.id)?ICONS.heartFilled:ICONS.heart)+'</button></div>' +
+      '<p class="modal-title">'+esc(item.title)+'</p>' +
+      (item.price ? '<p class="modal-price">'+esc(item.price)+'</p>' : '') +
+      '<div class="modal-cat-pill">'+esc(item.category)+'</div>' +
+      (item.desc ? '<p class="modal-desc">'+esc(item.desc)+'</p>' : '') +
+      '<div class="modal-meta-row">' +
+        '<span>'+ICONS.clock+' '+timeAgo(item.created_at)+'</span>' +
+        '<span>'+ICONS.clicks+' '+(item.clicks_phone+item.clicks_tg)+' контактів</span>' +
+      '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn btn-outline" id="modalPhoneBtn">'+ICONS.phone+' Показати номер</button>' +
+        '<button class="btn btn-solid" id="modalTgBtn">'+ICONS.send+' Telegram</button>' +
+      '</div>' +
+    '</div>';
+
+  overlay.classList.add("active");
+
+  document.getElementById("modalClose").addEventListener("click", closeItemModal);
+  document.getElementById("modalHeart").addEventListener("click", function(){
+    toggleFavorite(item.id);
+    this.innerHTML = isFav(item.id) ? ICONS.heartFilled : ICONS.heart;
+  });
+  document.getElementById("modalPhoneBtn").addEventListener("click", function(){
+    logClick(item, "phone");
+    if (item.phone) {
+      this.innerHTML = ICONS.phone + ' <span class="phone-reveal">'+esc(item.phone)+'</span>';
+    } else {
+      showToast("Номер не вказано продавцем");
+    }
+  });
+  document.getElementById("modalTgBtn").addEventListener("click", function(){
+    logClick(item, "tg");
+    recordConversation(item);
+    const uname = (item.username || "").replace("@","");
+    if (uname) {
+      const link = "https://t.me/" + uname;
+      if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.open(link, "_blank");
+    } else {
+      showToast("Контакт Telegram не вказано");
+    }
+  });
+
+  const track = document.getElementById("galleryTrack");
+  if (track) {
+    track.addEventListener("scroll", function(){
+      const idx = Math.round(track.scrollLeft / track.clientWidth);
+      overlay.querySelectorAll(".gallery-dots span").forEach(function(d,i){
+        d.classList.toggle("active", i === idx);
+      });
+    });
+  }
+}
+function closeItemModal(){
+  document.getElementById("itemModalOverlay").classList.remove("active");
 }
 
 /* ==========================================================================
@@ -1000,10 +1291,10 @@ function renderCreate(){
       '<div class="field"><textarea id="fDesc" placeholder="Опис" maxlength="400"></textarea></div>' +
       '<div class="field"><input id="fPrice" type="text" placeholder="Ціна (напр. 500 грн, договірна)" maxlength="40"></div>' +
       '<div class="file-input-wrap">' +
-        '<label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Фото товару</label>' +
-        '<input type="file" accept="image/*" onchange="window.uploadToImgBB(this, \'fImg\', \'fImgStatus\')">' +
+        '<label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Фото товару (до 3 шт.)</label>' +
+        '<input type="file" accept="image/*" multiple onchange="window.uploadMultipleToImgBB(this, \'fImg\', \'fImgStatus\')">' +
         '<input type="hidden" id="fImg">' +
-        '<div id="fImgStatus" style="font-size:11px; color:var(--text-tertiary); margin-top:6px;">Файл не вибрано</div>' +
+        '<div id="fImgStatus" style="font-size:11px; color:var(--text-tertiary); margin-top:6px;">Файли не вибрано</div>' +
       '</div>' +
       '<p class="hint">Контактні дані підставляються з Telegram. Можете також додавати телефон.</p>' +
       '<div class="field"><input id="fPhone" type="tel" placeholder="Телефон (необов\'язково)" maxlength="20"></div>' +
@@ -1059,7 +1350,6 @@ function renderProfile(){
   const mine = state.items.filter(function(i){ return i.user_id === CURRENT_UID; });
   const mineAlive = mine.filter(isAlive);
   const totalClicks = mine.reduce(function(s,i){ return s + i.clicks_phone + i.clicks_tg; }, 0);
-  const remaining = getWeeklyCooldownRemaining();
 
   document.getElementById("statGrid").innerHTML =
     '<div class="stat-card"><p class="num">'+mineAlive.length+'</p><p class="lbl">Активні</p></div>' +
@@ -1073,8 +1363,9 @@ function renderProfile(){
   } else {
     mineEl.innerHTML = mine.sort(function(a,b){return b.created_at-a.created_at;}).map(function(i){
       const alive = isAlive(i);
+      const thumb = getImages(i)[0];
       return '<div class="mine-row">' +
-        (i.img ? '<img src="'+esc(i.img)+'">' : '<div style="width:40px;height:40px;border-radius:8px;background:var(--accent-soft);flex:0 0 auto;"></div>') +
+        (thumb ? '<img src="'+esc(thumb)+'">' : '<div style="width:40px;height:40px;border-radius:8px;background:var(--accent-soft);flex:0 0 auto;"></div>') +
         '<div class="info"><p class="t">'+esc(i.title)+'</p>' +
         '<p class="d"><span class="status-dot '+(alive?"live":"dead")+'"></span>'+(alive?"Активне · "+fmtClock(timeLeftMs(i))+" лишилось":"Завершено")+' · '+(i.clicks_phone+i.clicks_tg)+' контактів</p></div>' +
       '</div>';
@@ -1233,8 +1524,59 @@ function renderSearch(q){
     results.innerHTML = '<div class="empty-state">'+ICONS.empty+'<p class="t">Нічого не знайдено</p><p class="d">Спробуйте інший запит</p></div>';
     return;
   }
-  results.innerHTML = '<div class="item-grid">' + list.map(function(i){ return itemCardHtml(i); }).join("") + '</div>';
+  results.innerHTML = '<div class="item-grid">' + list.map(function(i){ return itemCardMiniHtml(i); }).join("") + '</div>';
   bindItemCardActions(results);
+}
+
+/* ==========================================================================
+   12b. ОБРАНЕ (FAVORITES)
+   ========================================================================== */
+const favoritesOverlay = document.getElementById("favoritesOverlay");
+document.getElementById("favHeaderBtn").addEventListener("click", function(){
+  favoritesOverlay.classList.add("active");
+  renderFavorites();
+});
+document.getElementById("favoritesClose").addEventListener("click", function(){
+  favoritesOverlay.classList.remove("active");
+});
+function renderFavorites(){
+  const results = document.getElementById("favoritesResults");
+  const list = state.items.filter(function(i){ return state.favorites.has(i.id); })
+    .sort(function(a,b){ return b.created_at - a.created_at; });
+  if (!list.length){
+    results.innerHTML = '<div class="empty-state">'+ICONS.heart+'<p class="t">Обране порожнє</p><p class="d">Натисніть на сердечко на картці, щоб зберегти оголошення</p></div>';
+    return;
+  }
+  results.innerHTML = '<div class="item-grid">' + list.map(function(i){ return itemCardMiniHtml(i); }).join("") + '</div>';
+  bindItemCardActions(results);
+}
+
+/* ==========================================================================
+   12c. ФІЛЬТР (категорії, що "переїжджають" в кнопку при скролі)
+   ========================================================================== */
+const filterOverlay = document.getElementById("filterOverlay");
+document.getElementById("filterFab").addEventListener("click", openFilterOverlay);
+document.getElementById("filterClose").addEventListener("click", function(){
+  filterOverlay.classList.remove("active");
+});
+function openFilterOverlay(){
+  const list = document.getElementById("filterList");
+  const cats = ["Усі"].concat(state.categories);
+  list.innerHTML = cats.map(function(c){
+    return '<div class="filter-opt'+(state.activeCategory===c?" active":"")+'" data-cat="'+esc(c)+'">'+esc(c)+'</div>';
+  }).join("");
+  list.querySelectorAll(".filter-opt").forEach(function(opt){
+    opt.addEventListener("click", function(){
+      state.activeCategory = opt.dataset.cat;
+      state.visibleCount = CONFIG.PAGE_SIZE;
+      renderChips();
+      switchView("home");
+      renderItemGrid();
+      filterOverlay.classList.remove("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+  filterOverlay.classList.add("active");
 }
 
 /* ==========================================================================
@@ -1263,25 +1605,77 @@ function softUpdate() {
 }
 
 setInterval(function(){
-  document.querySelectorAll(".ttl-ring").forEach(function(ring){
-    const id = ring.dataset.ttl;
-    const item = state.items.find(function(i){ return i.id === id; });
+  document.querySelectorAll(".mini-ttl").forEach(function(el){
+    const card = el.closest(".item-card-mini");
+    if (!card) return;
+    const item = state.items.find(function(i){ return i.id === card.dataset.id; });
     if (!item) return;
     if (!isAlive(item)) { renderItemGrid(); return; }
-    const left = timeLeftMs(item);
-    const r = 12, c = 2*Math.PI*r;
-    const pct = left / CONFIG.POST_TTL_MS;
-    const fg = ring.querySelector(".fg");
-    if (fg) fg.setAttribute("stroke-dashoffset", c*(1-pct));
-    const txt = ring.querySelector(".txt");
-    if (txt) txt.textContent = fmtClock(left);
+    el.textContent = fmtClock(timeLeftMs(item));
   });
 }, 1000);
 
 setInterval(loadAll, CONFIG.REFRESH_MS);
 
 /* ==========================================================================
-   14. СТАРТ
+   14. СКРОЛ: КАПСУЛИ ШАПКИ/ФІЛЬТРА + СТРІЛКА "НАГОРУ"
+   ========================================================================== */
+let lastScrollY = window.scrollY || 0;
+let scrollTicking = false;
+
+function handleScroll(){
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
+  const topbar = document.getElementById("topbar");
+  const topbarTitle = document.getElementById("topbarTitle");
+  const chipRow = document.getElementById("chipRow");
+  const filterFab = document.getElementById("filterFab");
+  const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+  if (y > 40) {
+    topbar.classList.add("scrolled");
+    topbarTitle.textContent = "Довідник Ізмаїл";
+  } else {
+    topbar.classList.remove("scrolled");
+    topbarTitle.textContent = "Дошка";
+  }
+
+  if (state.activeView === "home") {
+    if (y > 40) {
+      chipRow.classList.add("hide-scroll");
+      filterFab.classList.add("show");
+    } else {
+      chipRow.classList.remove("hide-scroll");
+      filterFab.classList.remove("show");
+    }
+  } else {
+    chipRow.classList.remove("hide-scroll");
+    filterFab.classList.remove("show");
+  }
+
+  // Стрілка "нагору" показується лише коли користувач свайпає назад (вгору)
+  if (y < lastScrollY - 6 && y > 120) {
+    scrollTopBtn.classList.add("show");
+  } else if (y > lastScrollY + 6 || y <= 120) {
+    scrollTopBtn.classList.remove("show");
+  }
+
+  lastScrollY = y;
+  scrollTicking = false;
+}
+
+window.addEventListener("scroll", function(){
+  if (!scrollTicking) {
+    requestAnimationFrame(handleScroll);
+    scrollTicking = true;
+  }
+}, { passive: true });
+
+document.getElementById("scrollTopBtn").addEventListener("click", function(){
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/* ==========================================================================
+   15. СТАРТ
    ========================================================================== */
 loadAll();
 
