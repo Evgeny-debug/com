@@ -140,13 +140,16 @@ input,textarea,select{font-family:inherit;}
   background:var(--accent-soft); padding:2px 6px; border-radius:4px; letter-spacing:0.2px;
 }
 
-/* Топбар при скролі */
-.topbar.scrolled{
-  max-width:260px;
-  margin:0 auto 10px;
-  border-radius:999px;
-  padding:10px 16px;
-  justify-content:center;
+.topbar.scrolled {
+  max-width: 260px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(20, 20, 25, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .topbar.scrolled .sub,
 .topbar.scrolled .avatar-chip,
