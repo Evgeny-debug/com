@@ -642,7 +642,7 @@ input,textarea,select{font-family:inherit;}
 </div>
 
 <div class="search-overlay" id="favoritesOverlay">
-  <div class="search-head">
+  <div class="search-head" style="padding-top: 30px">
     <p style="font-weight:800;font-size:16px;margin:0;flex:1;">Обране</p>
     <button class="search-close" id="favoritesClose">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1590,36 +1590,14 @@ function renderSearch(q){
 /* ==========================================================================
    12b. ОБРАНЕ (FAVORITES)
    ========================================================================== */
-// Проверяем/создаем элемент блюр-оверлея динамически, если его нет в HTML
-let blurBackdrop = document.getElementById("blurBackdrop");
-if (!blurBackdrop) {
-  blurBackdrop = document.createElement("div");
-  blurBackdrop.id = "blurBackdrop";
-  blurBackdrop.innerHTML = '<button class="blur-close-btn" id="blurCloseBtn">Закрити</button>';
-  document.body.appendChild(blurBackdrop);
-}
-
 const favoritesOverlay = document.getElementById("favoritesOverlay");
-
 document.getElementById("favHeaderBtn").addEventListener("click", function(){
   favoritesOverlay.classList.add("active");
-  blurBackdrop.classList.add("active"); // Показываем блюр
   renderFavorites();
 });
-
-// Закрытие по клику на крестик убран, теперь закрываем по клику на блюр-фон или кнопку
-function closeFavorites() {
+document.getElementById("favoritesClose").addEventListener("click", function(){
   favoritesOverlay.classList.remove("active");
-  blurBackdrop.classList.remove("active");
-}
-
-blurBackdrop.addEventListener("click", function(e){
-  // Закрываем только если кликнули именно по фону или кнопке закрытия внутри него
-  if (e.target === blurBackdrop || e.target.id === "blurCloseBtn") {
-    closeFavorites();
-  }
 });
-
 function renderFavorites(){
   const results = document.getElementById("favoritesResults");
   const list = state.items.filter(function(i){ return state.favorites.has(i.id); })
@@ -1631,6 +1609,7 @@ function renderFavorites(){
   results.innerHTML = '<div class="item-grid">' + list.map(function(i){ return itemCardMiniHtml(i); }).join("") + '</div>';
   bindItemCardActions(results);
 }
+
 /* ==========================================================================
    12c. ФІЛЬТР (категорії, що "переїжджають" в кнопку при скролі)
    ========================================================================== */
