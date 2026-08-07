@@ -1488,11 +1488,26 @@ function switchView(name){
   document.querySelectorAll(".nav-btn").forEach(function(b){
     b.classList.toggle("active", b.dataset.view === name);
   });
+
   if (name === "create") renderCreate();
   if (name === "profile") renderProfile();
   if (name === "chat") renderChat();
   if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
 }
+
+
+if (tg && tg.BackButton) {
+  if (name === "home") {
+    tg.BackButton.hide(); // Скрываем на главной
+  } else {
+    tg.BackButton.show(); // Показываем на внутренних вкладках
+    tg.BackButton.onClick(function() {
+      switchView("home"); // Возвращаем на главную по клику
+    });
+  }
+}
+
+
 document.querySelectorAll(".nav-btn").forEach(function(btn){
   btn.addEventListener("click", function(){ switchView(btn.dataset.view); });
 });
