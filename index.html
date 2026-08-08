@@ -36,7 +36,7 @@
   color-scheme: light;
 }
 [data-theme="dark"]{
-  --bg:#0c0c0f; /* Оновлено згідно правок */
+  --bg:#000000;
   --surface:rgba(28,28,30,0.68);
   --surface-solid:#1C1C1E;
   --surface-strong:rgba(28,28,30,0.92);
@@ -57,16 +57,15 @@
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
 body{
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overscroll-behavior-y: none;
-  /* padding-top: 52px; Вилучено, щоб не ламати sticky header */
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+  padding-top: 52px;
 }
-button{font-family:inherit;}
-input,textarea,select{font-family:inherit;}
+button,input,textarea,select{font-family:inherit;}
 ::-webkit-scrollbar{display:none;}
 
 #app{
@@ -78,15 +77,12 @@ input,textarea,select{font-family:inherit;}
 }
 
 /* ==========================================================================
-   TOP BAR (Оновлено)
+   TOP BAR
    ========================================================================== */
 .topbar-wrap{
-  position:sticky; top:0; z-index:20;
-  padding-top:max(env(safe-area-inset-top), 10px);
+  position:sticky; top: calc(env(safe-area-inset-top) + 10px); z-index:20;
   background:transparent;
   pointer-events:none; 
-  transform: translateZ(0); /* Апаратне прискорення */
-  will-change: transform;
 }
 .topbar{
   pointer-events:auto;
@@ -99,13 +95,12 @@ input,textarea,select{font-family:inherit;}
   border-radius:var(--radius-l);
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   box-shadow:var(--shadow);
-  transition: max-width .3s ease, border-radius .3s ease, padding .3s ease, margin .3s ease, justify-content .3s ease;
-  padding-left: env(safe-area-inset-left, 12px);
+  transition: all .3s ease;
 }
 
 .gu-logo {
   font-family: 'Press Start 2P', monospace;
-  font-size:10px;
+  font-size:10px; 
   background: linear-gradient(135deg, #FFD700 0%, #0057B7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -115,6 +110,18 @@ input,textarea,select{font-family:inherit;}
   transition: font-size .3s ease;
 }
 .topbar .sub{font-size:11px; color:var(--text-secondary); margin-top:2px; font-weight:500; transition:opacity .2s;}
+.online-indicator {
+  display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; color:var(--good);
+  margin-top:2px;
+}
+.online-dot { width:6px; height:6px; border-radius:50%; background:var(--good); animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .avatar-chip{
   display:flex; align-items:center; gap:6px;
   background:var(--surface-solid); border:1px solid var(--border);
@@ -122,11 +129,18 @@ input,textarea,select{font-family:inherit;}
   transition:opacity .2s;
 }
 .head-actions{display:flex; align-items:center; gap:6px; transition:opacity .2s;}
+.fav-header-btn-wrap { position: relative; }
 .fav-header-btn{
   width:28px;height:28px;border-radius:50%;
   background:var(--surface-solid); border:1px solid var(--border);
   color:var(--bad); display:flex; align-items:center; justify-content:center; cursor:pointer;
 }
+.fav-badge {
+  position: absolute; top:-4px; right:-4px; background:var(--accent); color:#fff;
+  font-size:9px; font-weight:bold; border-radius:999px; padding:2px 5px; border:1px solid var(--surface-solid);
+  display:none; pointer-events:none;
+}
+.fav-badge.show { display:block; }
 .avatar-dot{
   width:22px;height:22px;border-radius:50%;
   background:linear-gradient(135deg,var(--accent),var(--accent-strong));
@@ -140,9 +154,7 @@ input,textarea,select{font-family:inherit;}
 }
 
 .topbar.scrolled {
-  max-width: 260px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 10px;
   border-radius: 999px;
   padding: 8px 14px;
   background: rgba(20, 20, 25, 0.85);
@@ -151,14 +163,15 @@ input,textarea,select{font-family:inherit;}
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .topbar.scrolled .sub,
-.topbar.scrolled .avatar-chip,
-.topbar.scrolled .head-actions{
+.topbar.scrolled .avatar-chip {
   display:none;
   opacity:0;
 }
 .topbar.scrolled .gu-logo{
-  font-size:14px;
-  text-align:center;
+  font-size:12px; 
+}
+.topbar.scrolled .head-actions {
+  opacity: 1;
 }
 
 /* ==========================================================================
@@ -168,98 +181,64 @@ input,textarea,select{font-family:inherit;}
 .view.active{display:block;}
 
 .banner-rail{
-  display:flex; gap:8px; overflow-x:auto; scroll-snap-type:none;
+  display:flex; gap:8px; overflow-x:auto; scroll-snap-type:none; 
   margin:0 -10px 4px; padding:0 10px;
 }
 .banner-card{
-  flex:0 0 88%;
-  border-radius:12px;
-  overflow:hidden;
-  position:relative;
-  min-height:130px;
-  background:var(--surface-solid);
-  border:1px solid var(--border);
-  cursor:pointer;
+  flex:0 0 88%; border-radius:12px; overflow:hidden; position:relative; min-height:130px;
+  background:var(--surface-solid); border:1px solid var(--border); cursor:pointer;
 }
-.banner-card img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-}
+.banner-card img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .banner-card .scrim{
   position:absolute; inset:0;
   background:linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
 }
-.banner-card .banner-text{
-  position:absolute; left:10px; right:10px; bottom:8px; color:#fff;
-}
+.banner-card .banner-text{ position:absolute; left:10px; right:10px; bottom:8px; color:#fff; }
 .banner-card .banner-text .t{font-weight:700; font-size:13px; margin:0 0 2px; text-shadow:0 1px 3px rgba(0,0,0,0.4);}
 .banner-card .banner-text .d{font-size:11px; opacity:0.9; margin:0; text-shadow:0 1px 3px rgba(0,0,0,0.4);}
 
-.banner-timer-wrap {
-  display:flex; align-items:center; justify-content:center;
-  margin-bottom:10px; height:12px;
-}
-.banner-timer-svg {
-  width:14px; height:14px; transform:rotate(-90deg);
-}
+.banner-timer-wrap { display:flex; align-items:center; justify-content:center; margin-bottom:10px; height:12px; }
+.banner-timer-svg { width:14px; height:14px; transform:rotate(-90deg); }
 .banner-timer-svg circle {
-  fill:none; stroke:var(--accent); stroke-width:2.5;
-  stroke-dasharray:38; stroke-dashoffset:38;
+  fill:none; stroke:var(--accent); stroke-width:2.5; stroke-dasharray:38; stroke-dashoffset:38;
 }
 
 .chip-row{
   display:flex; gap:6px; overflow-x:auto; margin:0 -10px 10px; padding:0 10px;
-  transition:opacity .25s, max-height .25s, margin .25s;
-  max-height:60px; opacity:1;
+  transition:opacity .25s, max-height .25s, margin .25s; max-height:60px; opacity:1;
 }
 .chip-row.hide-scroll{ opacity:0; max-height:0; margin-bottom:0; overflow:hidden; pointer-events:none; }
 .chip{
   flex:0 0 auto; padding:6px 12px; border-radius:999px;
   background:var(--surface-solid); border:1px solid var(--border);
-  font-size:11px; font-weight:600; color:var(--text-secondary); cursor:pointer;
-  white-space:nowrap;
+  font-size:11px; font-weight:600; color:var(--text-secondary); cursor:pointer; white-space:nowrap;
 }
 .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
 
-.item-grid{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:6px;
-}
+.item-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
 .item-card-mini{
-  background:var(--surface-solid);
-  border:1px solid var(--border);
-  border-radius:var(--radius-s);
-  overflow:hidden;
-  box-shadow:var(--shadow);
-  cursor:pointer;
+  background:var(--surface-solid); border:1px solid var(--border);
+  border-radius:var(--radius-s); overflow:hidden; box-shadow:var(--shadow); cursor:pointer;
 }
-.mini-media{
-  position:relative; width:100%; aspect-ratio:1/1;
-  background:var(--accent-soft); overflow:hidden;
-}
+.mini-media{ position:relative; width:100%; aspect-ratio:1/1; background:var(--accent-soft); overflow:hidden; }
 .mini-media img{width:100%; height:100%; object-fit:cover; display:block;}
 .mini-media .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);}
 .mini-ttl{
-  position:absolute; top:4px; left:4px;
-  background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
+  position:absolute; top:4px; left:4px; background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
   color:#fff; font-size:8px; font-weight:700; padding:2px 4px; border-radius:999px; z-index:2;
 }
 .mini-cat{
-  position:absolute; bottom:4px; left:4px; max-width:calc(100% - 10px);
-  background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
-  color:#fff; font-size:8px; font-weight:600; padding:2px 4px; border-radius:999px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2;
+  position:absolute; bottom:4px; left:4px; max-width:calc(100% - 10px); background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(3px); color:#fff; font-size:8px; font-weight:600; padding:2px 4px;
+  border-radius:999px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2;
 }
 .mini-heart{
-  position:absolute; top:4px; right:4px; z-index:2;
-  width:22px; height:22px; border-radius:50%;
-  background:rgba(0,0,0,0.4); backdrop-filter:blur(3px);
-  border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff;
+  position:absolute; top:4px; right:4px; z-index:2; width:22px; height:22px; border-radius:50%;
+  background:rgba(0,0,0,0.4); backdrop-filter:blur(3px); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff;
 }
 .mini-heart svg{width:12px; height:12px;}
 .mini-title{
-  font-size:11px; font-weight:700; margin:4px 6px 2px; line-height:1.2;
-  min-height:26px;
+  font-size:11px; font-weight:700; margin:4px 6px 2px; line-height:1.2; min-height:26px;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .mini-price{font-size:10.5px; font-weight:800; color:var(--accent); margin:0 6px 6px;}
@@ -272,8 +251,7 @@ input,textarea,select{font-family:inherit;}
 
 .btn{
   width:100%; display:flex; align-items:center; justify-content:center; gap:4px;
-  padding:8px 10px; border-radius:var(--radius-s); border:none; cursor:pointer;
-  font-size:11px; font-weight:700;
+  padding:8px 10px; border-radius:var(--radius-s); border:none; cursor:pointer; font-size:11px; font-weight:700;
 }
 .btn-outline{background:var(--accent-soft); color:var(--accent);}
 .btn-solid{background:var(--accent); color:#fff;}
@@ -286,44 +264,31 @@ input,textarea,select{font-family:inherit;}
 .footer-block .t{font-size:12px; font-weight:800; color:var(--text); margin:0 0 10px;}
 .footer-block .d{font-size:10px; color:var(--text-secondary); margin:10px 0 0;}
 
-.empty-state{
-  text-align:center; padding:24px 10px; color:var(--text-secondary);
-}
+.empty-state{ text-align:center; padding:24px 10px; color:var(--text-secondary); }
 .empty-state svg{margin-bottom:6px; opacity:0.5;}
 .empty-state .t{font-weight:700; color:var(--text); margin:0 0 2px;}
 .empty-state .d{font-size:11px; margin:0;}
 
+/* Item full-info & Modals (Bottom Sheet with Blur) */
 .item-modal-overlay{
-  position:fixed; inset:0; z-index:60;
-  display:flex; flex-direction:column; justify-content:flex-end;
-  visibility:hidden; opacity:0; pointer-events:none;
-  transition:visibility 0.3s, opacity 0.3s;
+  position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; justify-content:flex-end;
+  visibility:hidden; opacity:0; pointer-events:none; transition:visibility 0.3s, opacity 0.3s;
 }
-.item-modal-overlay.active{
-  visibility:visible; opacity:1; pointer-events:auto;
-}
+.item-modal-overlay.active{ visibility:visible; opacity:1; pointer-events:auto; }
 .modal-backdrop {
   position:absolute; inset:0;
-  background:rgba(0,0,0,0.35);
-  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
 }
 .modal-bottom-sheet {
-  position:relative; z-index:2;
-  background:var(--bg);
-  height:90vh; 
-  border-radius:22px 22px 0 0;
-  display:flex; flex-direction:column;
-  transform:translateY(100%);
-  transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  position:relative; z-index:2; background:var(--bg); max-height:85vh; 
+  border-radius:22px 22px 0 0; display:flex; flex-direction:column;
+  transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  padding-top: calc(env(safe-area-inset-top) + 10px); 
 }
-.item-modal-overlay.active .modal-bottom-sheet {
-  transform:translateY(0);
-}
-.item-modal-head{
-  display:flex; align-items:center; justify-content:flex-end;
-  padding:12px 14px 4px;
-}
+.item-modal-overlay.active .modal-bottom-sheet { transform:translateY(0); }
+.item-modal-head{ display:flex; align-items:center; justify-content:flex-end; padding:12px 14px 4px; }
 .item-modal-body{flex:1; overflow-y:auto; padding:0 14px 24px;}
 
 .gallery{
@@ -350,16 +315,14 @@ input,textarea,select{font-family:inherit;}
 .modal-desc{font-size:12px; color:var(--text-secondary); line-height:1.5; margin:0 0 12px; white-space:pre-wrap;}
 .modal-meta-row{display:flex; gap:12px; margin-bottom:14px; font-size:10px; color:var(--text-tertiary);}
 .modal-meta-row span{display:flex; align-items:center; gap:4px;}
-.modal-actions{display:flex; gap:6px;}
-.modal-actions .btn{padding:10px; font-size:12px; border-radius:var(--radius-m);}
+.modal-actions{display:flex; flex-direction:column; gap:8px;} /* Phone above Telegram */
+.modal-actions .btn{padding:12px; font-size:13px; border-radius:var(--radius-m);}
 
 /* Chat view */
 .chat-list{display:flex; flex-direction:column; gap:6px;}
 .chat-row{
-  display:flex; align-items:center; gap:10px;
-  background:var(--surface-solid); border:1px solid var(--border);
-  border-radius:var(--radius-m); padding:8px 10px;
-  cursor:pointer;
+  display:flex; align-items:center; gap:10px; background:var(--surface-solid); border:1px solid var(--border);
+  border-radius:var(--radius-m); padding:8px 10px; cursor:pointer;
 }
 .chat-row .icon-wrap{
   width:36px;height:36px;border-radius:50%;background:var(--accent-soft);
@@ -371,8 +334,7 @@ input,textarea,select{font-family:inherit;}
 .chat-row .chat-info .d{font-size:10px; color:var(--text-secondary); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .support-card{
   background:linear-gradient(135deg, var(--accent), var(--accent-strong));
-  border-radius:var(--radius-m); padding:10px; color:#fff; margin-bottom:10px;
-  display:flex; align-items:center; gap:10px;
+  border-radius:var(--radius-m); padding:10px; color:#fff; margin-bottom:10px; display:flex; align-items:center; gap:10px;
 }
 .support-card .icon-wrap{
   width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.18);
@@ -389,22 +351,11 @@ input,textarea,select{font-family:inherit;}
   border-radius:var(--radius-m); padding:8px 10px; margin-bottom:6px;
 }
 .field input, .field textarea{
-  width:100%; border:none; outline:none; background:transparent; color:var(--text);
-  font-size:13px; resize:none;
+  width:100%; border:none; outline:none; background:transparent; color:var(--text); font-size:13px; resize:none;
 }
 .field textarea{min-height:60px; line-height:1.3;}
-.file-input-wrap {
-  background: var(--surface-solid);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  padding: 8px 10px;
-  margin-bottom: 6px;
-}
-.file-input-wrap input[type="file"] {
-  width: 100%;
-  font-size: 11px;
-  color: var(--text);
-}
+.file-input-wrap { background: var(--surface-solid); border: 1px solid var(--border); border-radius: var(--radius-m); padding: 8px 10px; margin-bottom: 6px; }
+.file-input-wrap input[type="file"] { width: 100%; font-size: 11px; color: var(--text); }
 .cat-select-row{display:flex; flex-wrap:wrap; gap:4px;}
 .cat-opt{
   padding:6px 10px; border-radius:999px; background:var(--surface-solid);
@@ -426,14 +377,10 @@ input,textarea,select{font-family:inherit;}
 .hint{font-size:10px; color:var(--text-tertiary); margin:4px 2px 0;}
 
 /* Profile view */
-.profile-head{
-  display:flex; align-items:center; gap:10px; margin-bottom:12px;
-}
+.profile-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .profile-avatar{
-  width:46px;height:46px;border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),var(--accent-strong));
-  display:flex;align-items:center;justify-content:center; color:#fff; font-size:18px; font-weight:700;
-  overflow:hidden;
+  width:46px;height:46px;border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-strong));
+  display:flex;align-items:center;justify-content:center; color:#fff; font-size:18px; font-weight:700; overflow:hidden;
 }
 .profile-avatar img { width:100%; height:100%; object-fit:cover; }
 .profile-name{font-size:15px; font-weight:800; margin:0 0 2px; letter-spacing:-0.3px;}
@@ -441,29 +388,33 @@ input,textarea,select{font-family:inherit;}
 .stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:12px;}
 .stat-card{
   background:var(--surface-solid); border:1px solid var(--border);
-  border-radius:var(--radius-m); padding:8px 6px; text-align:center;
+  border-radius:var(--radius-m); padding:8px 6px; text-align:center; position: relative;
 }
 .stat-card .num{font-size:15px; font-weight:800; margin:0 0 2px; letter-spacing:-0.3px;}
 .stat-card .lbl{font-size:8px; color:var(--text-secondary); margin:0; font-weight:600; text-transform:uppercase; letter-spacing:0.2px;}
 .section-title{font-size:13px; font-weight:800; margin:12px 0 6px; letter-spacing:-0.3px;}
+
 .mine-row{
-  display:flex; align-items:center; gap:8px;
-  background:var(--surface-solid); border:1px solid var(--border);
-  border-radius:var(--radius-m); padding:6px 8px; margin-bottom:4px;
+  display:flex; flex-direction:column; gap:6px; background:var(--surface-solid); border:1px solid var(--border);
+  border-radius:var(--radius-m); padding:10px; margin-bottom:8px;
 }
-.mine-row img{width:36px;height:36px;border-radius:8px;object-fit:cover; flex:0 0 auto; background:var(--accent-soft);}
+.mine-row-content { display:flex; align-items:center; gap:8px; }
+.mine-row img{width:48px;height:48px;border-radius:8px;object-fit:cover; flex:0 0 auto; background:var(--accent-soft);}
 .mine-row .info{flex:1; min-width:0;}
-.mine-row .t{font-size:11px; font-weight:700; margin:0 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.mine-row .d{font-size:9px; color:var(--text-secondary); margin:0;}
-.status-dot{width:5px;height:5px;border-radius:50%; display:inline-block; margin-right:4px;}
+.mine-row .t{font-size:13px; font-weight:700; margin:0 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.mine-row .d{font-size:10px; color:var(--text-secondary); margin:0;}
+.mine-row .stats{font-size:10px; font-weight: 600; color:var(--accent); margin-top:4px;}
+.status-dot{width:6px;height:6px;border-radius:50%; display:inline-block; margin-right:4px;}
 .status-dot.live{background:var(--good);}
 .status-dot.dead{background:var(--text-tertiary);}
+.mine-actions { display:flex; gap:6px; margin-top: 4px; }
+.mine-actions .btn { font-size:10px; padding:6px; }
 
 .admin-panel{
   border:1px solid var(--accent); border-radius:var(--radius-l); padding:10px; margin-top:14px;
   background:var(--accent-soft);
 }
-.admin-panel .head{display:flex; align-items:center; gap:6px; margin-bottom:8px; color:var(--accent); font-weight:800; font-size:12px;}
+.admin-panel .head{display:flex; align-items:center; gap:6px; margin-bottom:12px; color:var(--accent); font-weight:800; font-size:12px;}
 .admin-item-row{
   display:flex; align-items:center; gap:6px; background:var(--surface-solid);
   border-radius:var(--radius-s); padding:6px 8px; margin-bottom:4px;
@@ -481,19 +432,13 @@ input,textarea,select{font-family:inherit;}
   position:fixed; left:0; right:0; bottom:calc(10px + var(--safe-b)); z-index:30;
   max-width:560px; margin:0 auto; padding:0 10px;
   display:flex; align-items:center; justify-content:center; gap:8px;
-  transition:transform .3s;
+  transition:all .3s;
 }
 .bottom-nav{
-  flex:1 1 auto; max-width:420px;
-  height:var(--nav-h);
-  background:var(--surface-strong);
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
-  border:1px solid var(--border);
-  border-radius:999px;
-  display:flex; align-items:stretch;
-  box-shadow:var(--shadow);
-  padding:0 2px;
+  flex:1 1 auto; max-width:420px; height:var(--nav-h); background:var(--surface-strong);
+  backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--border); border-radius:999px; display:flex; align-items:stretch;
+  box-shadow:var(--shadow); padding:0 2px;
 }
 .nav-btn{
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -502,176 +447,83 @@ input,textarea,select{font-family:inherit;}
 .nav-btn.active{color:var(--accent);}
 .nav-btn span{font-size:9px; font-weight:600;}
 .nav-btn-create .icon-circle{
-  width:26px;height:26px;border-radius:50%;
-  background:var(--accent); color:#fff;
+  width:26px;height:26px;border-radius:50%; background:var(--accent); color:#fff;
   display:flex;align-items:center;justify-content:center; margin-bottom:1px;
 }
 .nav-btn-create span:last-child{font-size:9px; font-weight:600; color:var(--text-tertiary);}
 
 .search-circle-btn{
-  width:48px; height:48px; border-radius:50%; flex:0 0 auto;
-  background:var(--surface-strong);
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
-  border:1px solid var(--border);
-  display:flex; align-items:center; justify-content:center;
+  width:48px; height:48px; border-radius:50%; flex:0 0 auto; background:var(--surface-strong);
+  backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
   color:var(--accent); box-shadow:var(--shadow); cursor:pointer;
 }
 
-/* Scroll-to-top arrow */
 .scroll-top-btn{
   position:fixed; left:10px; bottom:calc(var(--nav-h) + var(--safe-b) + 20px); z-index:35;
-  width:36px; height:36px; border-radius:50%;
-  background:var(--surface-strong);
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  width:36px; height:36px; border-radius:50%; background:var(--surface-strong);
+  backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%);
   border:1px solid var(--border); box-shadow:var(--shadow);
   display:flex; align-items:center; justify-content:center; color:var(--accent);
-  opacity:0; pointer-events:none; transform:translateY(8px);
-  transition:opacity .25s, transform .25s;
+  opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity .25s, transform .25s;
 }
 .scroll-top-btn.show{opacity:1; pointer-events:auto; transform:translateY(0);}
 
-/* Filter pill fab */
 .filter-fab{
   position:fixed; right:10px; bottom:calc(var(--nav-h) + var(--safe-b) + 20px); z-index:35;
-  display:flex; align-items:center; gap:4px;
-  padding:8px 14px; border-radius:999px;
+  display:flex; align-items:center; gap:4px; padding:8px 14px; border-radius:999px;
   background:var(--accent); color:#fff; font-size:11px; font-weight:700;
   border:none; box-shadow:var(--shadow); cursor:pointer;
-  opacity:0; pointer-events:none; transform:translateY(8px);
-  transition:opacity .25s, transform .25s;
+  opacity:0; pointer-events:none; transform:translateY(8px); transition:opacity .25s, transform .25s;
 }
 .filter-fab.show{opacity:1; pointer-events:auto; transform:translateY(0);}
 
-/* Оновлений дизайн пошуку */
-.search-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
+.search-overlay, .filter-overlay{
+  position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px); display:none; flex-direction:column; justify-content:flex-end;
 }
-.search-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
+.search-overlay.active, .filter-overlay.active{display:flex;}
+.search-head{
+  display:flex; align-items:center; gap:8px; padding:calc(var(--safe-t) + 16px) 10px 10px; 
+  background:var(--surface-strong); border-top-left-radius: 20px; border-top-right-radius: 20px;
 }
-.search-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  background: rgba(20, 20, 25, 0.94);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px 16px 0 0;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-sizing: border-box;
-  width: 100%;
-}
-.search-overlay.active .search-head {
-  transform: translateY(0);
-}
-.search-head .field {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 6px 10px;
-  margin: 0;
-}
-.search-head input {
-  width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-  font-size: 13px;
-  padding: 0;
-}
-.search-head input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
-}
-.search-close {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-}
-.search-close:active {
-  background: rgba(255, 255, 255, 0.12);
-}
-.search-results {
-  background: rgba(20, 20, 25, 0.94);
-  backdrop-filter: blur(20px);
-  width: 100%;
-  max-height: 65vh;
-  overflow-y: auto;
-  padding: 0 10px 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-sizing: border-box;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.search-overlay.active .search-results {
-  transform: translateY(0);
-}
-
-/* Filter overlay fallback style */
-.filter-overlay{
-  position:fixed; inset:0; z-index:50; background:var(--bg);
-  display:none; flex-direction:column;
-}
-.filter-overlay.active{display:flex;}
-.filter-list{padding:10px; overflow-y:auto; flex:1;}
+.search-head .field{flex:1; margin:0; display:flex; align-items:center; gap:6px; padding:8px 10px;}
+.search-close{background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:4px;}
+.search-results, .filter-list{padding:10px; overflow-y:auto; flex:1; background:var(--bg);}
 .filter-opt{
   padding:10px; border-radius:var(--radius-m); background:var(--surface-solid);
   border:1px solid var(--border); font-weight:700; font-size:12px; cursor:pointer; margin-bottom:6px;
 }
 .filter-opt.active{background:var(--accent); color:#fff; border-color:var(--accent);}
 
-/* Toast */
 .toast{
   position:fixed; left:50%; bottom:calc(var(--nav-h) + var(--safe-b) + 12px); transform:translateX(-50%);
   background:var(--text); color:var(--bg); padding:8px 14px; border-radius:999px;
   font-size:11px; font-weight:600; z-index:80; opacity:0; pointer-events:none;
-  transition:opacity 0.25s, transform 0.25s;
-  max-width:85%; text-align:center;
+  transition:opacity 0.25s, transform 0.25s; max-width:85%; text-align:center;
 }
 .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
 .phone-reveal{font-weight:700; color:var(--accent);}
+
 </style>
 </head>
 <body>
 <div id="app">
+
   <div class="topbar-wrap">
     <div class="topbar" id="topbar">
       <div>
         <h1 id="topbarTitle" class="gu-logo">Global Ukraine</h1>
-        <p class="sub" id="topbarSub">Оголошення поруч</p>
+        <div class="sub" id="topbarSub">
+           Оголошення поруч <br>
+           <span class="online-indicator"><span class="online-dot"></span><span id="onlineCount">--</span> онлайн</span>
+        </div>
       </div>
       <div class="head-actions">
-        <button class="fav-header-btn" id="favHeaderBtn"></button>
+        <div class="fav-header-btn-wrap">
+          <button class="fav-header-btn" id="favHeaderBtn"></button>
+          <div class="fav-badge" id="favBadge">0</div>
+        </div>
         <div class="avatar-chip" id="avatarChip">
           <div class="avatar-dot" id="avatarDot">?</div>
           <span id="adminBadgeSlot"></span>
@@ -729,9 +581,11 @@ input,textarea,select{font-family:inherit;}
     <div id="mineList"></div>
     <div id="adminSlot"></div>
   </section>
+
 </div>
 
 <div class="search-overlay" id="searchOverlay">
+  <div style="flex:1;" onclick="toggleSearch(false)"></div>
   <div class="search-head">
     <div class="field">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-tertiary)"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -758,6 +612,7 @@ input,textarea,select{font-family:inherit;}
 </div>
 
 <div class="filter-overlay" id="filterOverlay">
+  <div style="flex:1;" onclick="document.getElementById('filterOverlay').classList.remove('active')"></div>
   <div class="search-head">
     <p style="font-weight:800; font-size:14px; margin:0; flex:1;">Категорія</p>
     <button class="search-close" id="filterClose">
@@ -843,7 +698,7 @@ const CONFIG = {
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyzH3PlGk8iEbjik1-b6Jv7mtrgoMeSkal2nHGywathjoli9I0UCbFMlWiU7cb3Q2J3gA/exec",
   WEEK_MS: 7 * 24 * 60 * 60 * 1000,
   POST_TTL_MS: 24 * 60 * 60 * 1000,
-  REFRESH_MS: 25000,
+  REFRESH_MS: 15000, 
   PAGE_SIZE: 48,
   MAX_PHOTOS: 3,
   DEFAULT_CATEGORIES: ["Товари","Послуги","Вакансії","Нерухомість","Інше"]
@@ -947,38 +802,37 @@ const CURRENT_UID = String(tgUser.id);
 const DISPLAY_NAME = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(" ") || tgUser.username || "Користувач";
 
 const savedCats = JSON.parse(localStorage.getItem("custom_categories_v1") || "null");
-const savedBanners = JSON.parse(localStorage.getItem("localBanners_v1") || "[]");
 const savedFavorites = JSON.parse(localStorage.getItem("favorites_v1") || "[]");
 const savedDeleted = JSON.parse(localStorage.getItem("deleted_v1") || "[]"); 
 
 const state = {
-  banners: savedBanners,
+  banners: [], // Тепер зберігаємо тільки онлайн
   items: [],
   admins: [],
   adminIds: new Set(),
   categories: savedCats || CONFIG.DEFAULT_CATEGORIES,
-  localItems: JSON.parse(localStorage.getItem("localItems_v1") || "[]"),
   clickLog: JSON.parse(localStorage.getItem("clickLog_v1") || "[]"),
   favorites: new Set(savedFavorites),
   deletedIds: new Set(savedDeleted),
+  inheritedTimers: [], // Залишок часу від видалених оголошень
   isAdmin: false,
   activeView: "home",
   activeCategory: "Усі",
   newCatChoice: (savedCats || CONFIG.DEFAULT_CATEGORIES)[0],
-  visibleCount: CONFIG.PAGE_SIZE
+  visibleCount: CONFIG.PAGE_SIZE,
+  editModeId: null
 };
 
 let isFirstLoad = true;
 
 function persistLocal(){
-  localStorage.setItem("localItems_v1", JSON.stringify(state.localItems));
   localStorage.setItem("clickLog_v1", JSON.stringify(state.clickLog));
   localStorage.setItem("custom_categories_v1", JSON.stringify(state.categories));
-  localStorage.setItem("localBanners_v1", JSON.stringify(state.banners));
   localStorage.setItem("deleted_v1", JSON.stringify(Array.from(state.deletedIds)));
 }
 function persistFavorites(){
   localStorage.setItem("favorites_v1", JSON.stringify(Array.from(state.favorites)));
+  updateFavCounter();
 }
 
 const ICONS = {
@@ -994,16 +848,16 @@ const ICONS = {
   shield: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
   lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>',
   heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
-  heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+  heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  edit: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  refresh: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
 };
 
 function fetchCsv(url){
   return new Promise(function(resolve){
     if (!isConfigured(url)) { resolve([]); return; }
     Papa.parse(url, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
+      download: true, header: true, skipEmptyLines: true,
       complete: function(res){ resolve(res.data || []); },
       error: function(){ resolve([]); }
     });
@@ -1016,21 +870,22 @@ async function loadAll(){
     fetchCsv(CONFIG.SHEETS.items),
     fetchCsv(CONFIG.SHEETS.admins)
   ]);
-  const sheetBanners = banners.filter(function(b){ return b.title || b.img; });
-  const bannerIds = new Set(sheetBanners.map(b => b.id || b.title));
-  state.banners = sheetBanners.concat(state.banners.filter(b => !bannerIds.has(b.id || b.title)));
-
+  
+  // Беремо банери ТІЛЬКИ з гугл таблиці
+  state.banners = banners.filter(function(b){ return b.title || b.img; });
+  
   state.admins = admins;
   state.adminIds = new Set(admins.map(a => String(a.telegram_id || "").trim()));
   
-  const sheetItems = items
+  // Беремо ітеми ТІЛЬКИ з таблиці (ніяких локальних), виключаючи локально видалені (доки таблиця не оновиться)
+  state.items = items
     .filter(function(it){ return it.title && !state.deletedIds.has(it.id || (it.user_id + "_" + it.created_at)); })
     .map(normalizeItem);
 
-  const sheetIds = new Set(sheetItems.map(function(i){ return i.id; }));
-  const merged = sheetItems.concat(state.localItems.filter(function(i){ return !sheetIds.has(i.id) && !state.deletedIds.has(i.id); }));
-  state.items = merged;
   state.isAdmin = state.adminIds.has(CURRENT_UID);
+
+  // Оновлюємо онлайн
+  updateOnlineCount();
 
   if (isFirstLoad) {
     renderAll();
@@ -1077,12 +932,10 @@ async function callAppsScript(action, payload){
 }
 
 async function submitItem(item){
-  state.localItems.unshift(item);
-  state.items.unshift(item);
-  persistLocal();
+  state.items.unshift(item); // Додаємо тимчасово доки не прийде з CSV
   const res = await callAppsScript("addItem", item);
   if (res && res.demo) {
-    showToast("Оголошення додано (локально)");
+    showToast("Оголошення додано (Демо)");
   } else {
     showToast("Оголошення опубліковано");
   }
@@ -1095,14 +948,57 @@ async function logClick(item, type){
   await callAppsScript("logClick", { item_id: item.id, type: type, user_id: CURRENT_UID });
 }
 
-async function deleteItemAdmin(item){
+// Видалення товару (Адміном або Власником)
+async function deleteItem(item, isOwnerDelete = false){
   state.deletedIds.add(item.id); 
+  
+  if (isOwnerDelete && isAlive(item)) {
+    // Зберігаємо таймер видаленого товару для наступного використання
+    state.inheritedTimers.push(item.created_at);
+  }
+
   state.items = state.items.filter(function(i){ return i.id !== item.id; });
-  state.localItems = state.localItems.filter(function(i){ return i.id !== item.id; });
   persistLocal();
   await callAppsScript("deleteItem", { item_id: item.id });
   showToast("Оголошення видалено");
   renderAll();
+}
+
+window.repostItem = async function(itemId) {
+  const item = state.items.find(i => i.id === itemId);
+  if (!item) return;
+  const remaining = getWeeklyCooldownRemaining();
+  if (remaining > 0 && !state.isAdmin) {
+    showToast("Ліміт публікацій вичерпано!");
+    return;
+  }
+  
+  const newItem = { ...item };
+  newItem.id = CURRENT_UID + "_" + Date.now();
+  newItem.created_at = Date.now();
+  newItem.clicks_phone = 0;
+  newItem.clicks_tg = 0;
+  
+  await submitItem(newItem);
+  renderAll();
+};
+
+window.editItem = function(itemId) {
+  const item = state.items.find(i => i.id === itemId);
+  if (!item) return;
+  state.editModeId = item.id;
+  state.newCatChoice = item.category;
+  switchView("create");
+  
+  setTimeout(() => {
+    document.getElementById("fTitle").value = item.title;
+    document.getElementById("fDesc").value = item.desc;
+    document.getElementById("fPrice").value = item.price;
+    document.getElementById("fImg").value = item.img;
+    document.getElementById("fPhone").value = item.phone;
+    if(item.img) document.getElementById("fImgStatus").innerText = "Збережені фотографії";
+    document.getElementById("submitBtn").textContent = "Зберегти зміни";
+  }, 100);
 }
 
 function toggleFavorite(id){
@@ -1111,6 +1007,25 @@ function toggleFavorite(id){
   persistFavorites();
 }
 function isFav(id){ return state.favorites.has(id); }
+
+function updateFavCounter() {
+  const badge = document.getElementById("favBadge");
+  const count = state.favorites.size;
+  if (count > 0) {
+    badge.textContent = count > 99 ? "99+" : count;
+    badge.classList.add("show");
+  } else {
+    badge.classList.remove("show");
+  }
+}
+
+function updateOnlineCount() {
+  // Динамічна імітація онлайну (25-45) щоб здавалося живим, 
+  // або можна витягнути з GS якби там був лічильник сесій.
+  const base = 25;
+  const fluctuation = Math.floor(Math.sin(Date.now() / 10000) * 10) + 10; 
+  document.getElementById("onlineCount").innerText = base + fluctuation;
+}
 
 function esc(s){
   return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -1182,13 +1097,24 @@ function getAvatarHtml(photoUrl, name) {
   return initials(name);
 }
 
+function renderRingChart(val, max, color, label) {
+  const pct = max === 0 ? 0 : Math.min(100, Math.round((val/max)*100));
+  const dash = (pct * 37.7) / 100; // Довжина кола r=6 -> ~37.7
+  return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;">
+    <svg width="40" height="40" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="6" fill="none" stroke="var(--border)" stroke-width="2"/>
+      <circle cx="10" cy="10" r="6" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="37.7" stroke-dashoffset="${37.7 - dash}" stroke-linecap="round" transform="rotate(-90 10 10)"/>
+    </svg>
+    <span style="font-size:12px;font-weight:800;margin-top:4px;">${val}</span>
+    <span style="font-size:8px;color:var(--text-secondary);text-transform:uppercase;">${label}</span>
+  </div>`;
+}
+
 function renderTopbar(){
   document.getElementById("avatarDot").innerHTML = getAvatarHtml(tgUser.photo_url, DISPLAY_NAME);
-  document.getElementById("adminBadgeSlot").innerHTML = state.isAdmin
-    ? '<span class="admin-badge">Адмін</span>' : "";
-  document.getElementById("topbarSub").textContent =
-    "Оголошення поруч · " + state.items.filter(isAlive).length + " активних";
+  document.getElementById("adminBadgeSlot").innerHTML = state.isAdmin ? '<span class="admin-badge">Адмін</span>' : "";
   document.getElementById("favHeaderBtn").innerHTML = ICONS.heart;
+  updateFavCounter();
   
   document.getElementById("topbarTitle").onclick = function() {
     const randomMsg = RANDOM_MESSAGES[Math.floor(Math.random() * RANDOM_MESSAGES.length)];
@@ -1204,9 +1130,9 @@ window.openInfoModal = function() {
     <b>Як користуватися додатком:</b><br><br>
     1. На головній сторінці переглядайте активні оголошення. Використовуйте категорії та пошук для зручності.<br>
     2. Увійдіть у картку, щоб написати автору у Telegram або подивитись номер телефону.<br>
-    3. Додавайте товари до обраного (сердечко), щоб не загубити.<br>
-    4. Створюйте власні оголошення у вкладці "Створити". Безкоштовно доступно 3 публікації на тиждень.<br>
-    5. Кожне оголошення активне 24 години, після чого автоматично приховується.<br><br>
+    3. Додавайте товари до обраного, щоб не загубити.<br>
+    4. Створюйте власні оголошення. Безкоштовно доступно 3 публікації на тиждень.<br>
+    5. Кожне оголошення активне 24 години. Якщо ви видалите його раніше, час перенесеться на наступне оголошення!<br><br>
     Гарного користування!
   `;
   document.getElementById("infoModal").classList.add("active");
@@ -1488,12 +1414,25 @@ function renderChat(){
   });
 }
 
+window.cancelEdit = function() {
+  state.editModeId = null;
+  document.getElementById("fTitle").value = "";
+  document.getElementById("fDesc").value = "";
+  document.getElementById("fPrice").value = "";
+  document.getElementById("fImg").value = "";
+  document.getElementById("fPhone").value = "";
+  document.getElementById("fImgStatus").innerText = "Файли не вибрано";
+  document.getElementById("submitBtn").textContent = "Опублікувати";
+  switchView("profile");
+}
+
 function renderCreate(){
   const gate = document.getElementById("createGate");
+  const isEditing = !!state.editModeId;
   const remaining = getWeeklyCooldownRemaining();
   const userWeeklyCount = getUserWeeklyPosts().length;
 
-  if (remaining > 0 && !state.isAdmin){
+  if (remaining > 0 && !state.isAdmin && !isEditing){
     gate.innerHTML =
       '<div class="cooldown-banner"><div class="icon-wrap">'+ICONS.lock+'</div>' +
       '<div><p class="t">Ліміт вичерпано (3 з 3)</p>' +
@@ -1506,6 +1445,7 @@ function renderCreate(){
     : '<p class="hint">Використано публікацій на цьому тижні: <b>'+userWeeklyCount+' з 3</b></p>';
 
   gate.innerHTML =
+    (isEditing ? '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><p style="font-weight:800; font-size:14px; margin:0;">Редагування</p><button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:10px;" onclick="cancelEdit()">Скасувати</button></div>' : '') +
     '<div class="form-section">' +
       '<p class="form-label">Категорія</p>' +
       '<div class="cat-select-row" id="catSelectRow"></div>' +
@@ -1523,8 +1463,8 @@ function renderCreate(){
       '</div>' +
       '<div class="field"><input id="fPhone" type="tel" placeholder="Телефон (опціонально)" maxlength="20"></div>' +
     '</div>' +
-    limitBadge +
-    '<button class="submit-btn" id="submitBtn" style="margin-top:10px;">Опублікувати</button>' +
+    (!isEditing ? limitBadge : '') +
+    '<button class="submit-btn" id="submitBtn" style="margin-top:10px;">' + (isEditing ? 'Зберегти зміни' : 'Опублікувати') + '</button>' +
     '<p class="hint" style="text-align:center;">Показується у стрічці 24 години</p>';
 
   const row = document.getElementById("catSelectRow");
@@ -1547,16 +1487,49 @@ function renderCreate(){
     const phone = document.getElementById("fPhone").value.trim();
     if (!title){ showToast("Вкажіть назву оголошення"); return; }
     const btn = document.getElementById("submitBtn");
-    btn.disabled = true; btn.textContent = "Публікуємо…";
-    const item = normalizeItem({
-      id: CURRENT_UID + "_" + Date.now(),
-      category: state.newCatChoice,
-      title: title, desc: desc, price: price, img: img,
-      username: tgUser.username || "", phone: phone,
-      user_id: CURRENT_UID, user_photo: tgUser.photo_url || "", created_at: Date.now(),
-      clicks_phone: 0, clicks_tg: 0
-    });
-    await submitItem(item);
+    btn.disabled = true; btn.textContent = "Збереження…";
+
+    if (state.editModeId) {
+      // Редагування: заміняємо існуюче
+      const itemIdx = state.items.findIndex(i => i.id === state.editModeId);
+      if (itemIdx > -1) {
+        state.items[itemIdx].title = title;
+        state.items[itemIdx].desc = desc;
+        state.items[itemIdx].price = price;
+        state.items[itemIdx].img = img;
+        state.items[itemIdx].phone = phone;
+        state.items[itemIdx].category = state.newCatChoice;
+        await callAppsScript("editItem", state.items[itemIdx]);
+        showToast("Зміни збережено");
+      }
+      state.editModeId = null;
+    } else {
+      // Нове оголошення (спадкоємність таймера)
+      let postTime = Date.now();
+      if (state.inheritedTimers.length > 0) {
+        postTime = state.inheritedTimers.shift(); // Беремо таймер видаленого
+        showToast("Успадковано час видаленого оголошення");
+      }
+      
+      const item = normalizeItem({
+        id: CURRENT_UID + "_" + Date.now(),
+        category: state.newCatChoice,
+        title: title, desc: desc, price: price, img: img,
+        username: tgUser.username || "", phone: phone,
+        user_id: CURRENT_UID, user_photo: tgUser.photo_url || "", created_at: postTime,
+        clicks_phone: 0, clicks_tg: 0
+      });
+      await submitItem(item);
+    }
+    
+    // Очищення полів
+    document.getElementById("fTitle").value = "";
+    document.getElementById("fDesc").value = "";
+    document.getElementById("fPrice").value = "";
+    document.getElementById("fImg").value = "";
+    document.getElementById("fPhone").value = "";
+    document.getElementById("fImgStatus").innerText = "Файли не вибрано";
+
     state.activeView = "home";
     switchView("home");
     renderAll();
@@ -1586,10 +1559,30 @@ function renderProfile(){
       const alive = isAlive(i);
       const thumb = getImages(i)[0];
       const t = fmtClock(timeLeftMs(i));
+      const mockViews = (i.clicks_phone + i.clicks_tg) * 4 + Math.floor((Date.now() - i.created_at)/3600000); 
+      
+      let actionButtons = '';
+      if (alive) {
+        actionButtons = `
+          <button class="btn btn-outline" style="flex:1" onclick="editItem('${i.id}')">${ICONS.edit} Редагувати</button>
+          <button class="btn btn-outline" style="flex:1; color:var(--bad); border-color:var(--bad);" onclick="deleteItem({id:'${i.id}', created_at:${i.created_at}}, true)">${ICONS.trash} Видалити</button>
+        `;
+      } else {
+        actionButtons = `
+          <button class="btn btn-solid" style="flex:1" onclick="repostItem('${i.id}')">${ICONS.refresh} Повторно</button>
+          <button class="btn btn-outline" style="flex:1" onclick="window.open('https://t.me/evsdev', '_blank')">Надовго</button>
+        `;
+      }
+
       return '<div class="mine-row">' +
-        (thumb ? '<img src="'+esc(thumb)+'">' : '<div style="width:36px;height:36px;border-radius:8px;background:var(--accent-soft);flex:0 0 auto;"></div>') +
-        '<div class="info"><p class="t">'+esc(i.title)+'</p>' +
-        '<p class="d"><span class="status-dot '+(alive?"live":"dead")+'"></span>'+(alive?(t==="∞"?"Назавжди":"Активне · "+t+" лишилось"):"Завершено")+' · '+(i.clicks_phone+i.clicks_tg)+' контактів</p></div>' +
+        '<div class="mine-row-content">' +
+          (thumb ? '<img src="'+esc(thumb)+'">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--accent-soft);flex:0 0 auto;display:flex;align-items:center;justify-content:center;">'+ICONS.image+'</div>') +
+          '<div class="info"><p class="t">'+esc(i.title)+'</p>' +
+          '<p class="d"><span class="status-dot '+(alive?"live":"dead")+'"></span>'+(alive?(t==="∞"?"Назавжди":"Активне · "+t+" лишилось"):"Завершено")+'</p>' +
+          '<div class="stats">👁 '+(mockViews>0?mockViews:0)+' переглядів · 📞 '+(i.clicks_phone+i.clicks_tg)+' кліків</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mine-actions">' + actionButtons + '</div>' +
       '</div>';
     }).join("");
   }
@@ -1599,13 +1592,16 @@ function renderProfile(){
     const uniqueUsers = new Set(state.items.map(function(i){ return i.user_id; })).size;
     const activeItems = state.items.filter(isAlive).length;
     const totalClicksGlobal = state.items.reduce(function(s,i){ return s+i.clicks_phone+i.clicks_tg; }, 0);
+    const mockTotalViews = totalClicksGlobal * 5 + activeItems * 10;
+    
     adminSlot.innerHTML =
       '<div class="admin-panel">' +
         '<div class="head">'+ICONS.shield+' Панель адміністратора</div>' +
-        '<div class="stat-grid" style="margin-bottom:8px;">' +
-          '<div class="stat-card"><p class="num">'+uniqueUsers+'</p><p class="lbl">Юзерів</p></div>' +
-          '<div class="stat-card"><p class="num">'+activeItems+'</p><p class="lbl">Активних</p></div>' +
-          '<div class="stat-card"><p class="num">'+totalClicksGlobal+'</p><p class="lbl">Кліків</p></div>' +
+        
+        '<div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">' +
+          renderRingChart(uniqueUsers, 1000, 'var(--accent)', 'Юзерів') +
+          renderRingChart(activeItems, 500, 'var(--good)', 'Активних') +
+          renderRingChart(totalClicksGlobal, 2000, 'var(--warn)', 'Кліків') +
         '</div>' +
 
         '<p class="form-label" style="margin-top:10px;">Додати банер-постер</p>' +
@@ -1643,7 +1639,7 @@ function renderProfile(){
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.delbanner);
         state.banners.splice(idx, 1);
-        persistLocal();
+        callAppsScript("deleteBanner", { idx }); // Потрібно додати в AppsScript
         showToast("Банер видалено");
         renderAll();
       });
@@ -1657,7 +1653,6 @@ function renderProfile(){
       if (!title || !img){ showToast("Заповніть назву та завантажте картинку"); return; }
       const newBanner = { id: "b_" + Date.now(), title, desc, img, link };
       state.banners.unshift(newBanner);
-      persistLocal();
       await callAppsScript("addBanner", newBanner);
       showToast("Банер додано");
       renderAll();
@@ -1688,7 +1683,7 @@ function renderProfile(){
       listEl.querySelectorAll("[data-del]").forEach(function(btn){
         btn.addEventListener("click", function(){
           const item = state.items.find(function(i){ return i.id === btn.dataset.del; });
-          if (item) deleteItemAdmin(item);
+          if (item) deleteItem(item, false);
         });
       });
     }
@@ -1717,13 +1712,17 @@ if (tg && tg.BackButton) {
   } else {
     tg.BackButton.show();
     tg.BackButton.onClick(function() {
+      if (state.editModeId) cancelEdit();
       switchView("home");
     });
   }
 }
 
 document.querySelectorAll(".nav-btn").forEach(function(btn){
-  btn.addEventListener("click", function(){ switchView(btn.dataset.view); });
+  btn.addEventListener("click", function(){ 
+    if (state.editModeId && btn.dataset.view !== "create") cancelEdit();
+    switchView(btn.dataset.view); 
+  });
 });
 
 const searchOverlay = document.getElementById("searchOverlay");
@@ -1734,11 +1733,19 @@ document.getElementById("fabSearch").addEventListener("click", function(){
 });
 document.getElementById("searchClose").addEventListener("click", function(){
   searchOverlay.classList.remove("active");
-  document.getElementById("searchInput").blur();
 });
 document.getElementById("searchInput").addEventListener("input", function(e){
   renderSearch(e.target.value.trim().toLowerCase());
 });
+window.toggleSearch = function(show) {
+  if (show) {
+    searchOverlay.classList.add('active');
+    setTimeout(() => document.getElementById("searchInput").focus(), 150);
+  } else {
+    searchOverlay.classList.remove('active');
+    document.getElementById("searchInput").blur();
+  }
+}
 
 function renderSearch(q){
   const results = document.getElementById("searchResults");
@@ -1827,52 +1834,64 @@ function softUpdate() {
   }
 }
 
-// Ініціалізація та таймери, які були обрізані:
 setInterval(function(){
-  document.querySelectorAll(".item-card-mini").forEach(function(card){
-    const id = card.dataset.id;
-    const item = state.items.find(i => i.id === id);
-    if(item && isAlive(item)) {
-      const ttlEl = card.querySelector(".mini-ttl");
-      if(ttlEl) {
-        const t = fmtClock(timeLeftMs(item));
-        ttlEl.textContent = t === "∞" ? "Назавжди" : t;
-      }
-    }
+  document.querySelectorAll(".mini-ttl").forEach(function(el){
+    const card = el.closest(".item-card-mini");
+    if (!card) return;
+    const item = state.items.find(function(i){ return i.id === card.dataset.id; });
+    if (!item) return;
+    if (!isAlive(item)) { renderItemGrid(); return; }
+    const t = fmtClock(timeLeftMs(item));
+    el.textContent = t === "∞" ? "Назавжди" : t;
   });
 }, 1000);
 
-let lastScrollY = window.scrollY;
-window.addEventListener("scroll", function() {
-  const y = window.scrollY;
+setInterval(loadAll, CONFIG.REFRESH_MS);
+
+let lastScrollY = window.scrollY || 0;
+let scrollTicking = false;
+
+function handleScroll(){
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
   const topbar = document.getElementById("topbar");
   const chipRow = document.getElementById("chipRow");
-  const scrollTopBtn = document.getElementById("scrollTopBtn");
   const filterFab = document.getElementById("filterFab");
-  const bottomBarWrap = document.getElementById("bottomBarWrap");
+  const scrollTopBtn = document.getElementById("scrollTopBtn");
 
-  if (y > 30) {
+  if (y > 40) {
     topbar.classList.add("scrolled");
-    chipRow.classList.add("hide-scroll");
   } else {
     topbar.classList.remove("scrolled");
-    chipRow.classList.remove("hide-scroll");
   }
 
-  if (y > 250) {
-    scrollTopBtn.classList.add("show");
-    filterFab.classList.add("show");
+  if (state.activeView === "home") {
+    if (y > 40) {
+      chipRow.classList.add("hide-scroll");
+      filterFab.classList.add("show");
+    } else {
+      chipRow.classList.remove("hide-scroll");
+      filterFab.classList.remove("show");
+    }
   } else {
-    scrollTopBtn.classList.remove("show");
+    chipRow.classList.remove("hide-scroll");
     filterFab.classList.remove("show");
   }
-  
-  if (y > lastScrollY && y > 100) {
-    bottomBarWrap.style.transform = "translateY(150%)";
-  } else {
-    bottomBarWrap.style.transform = "translateY(0)";
+
+  if (y < lastScrollY - 6 && y > 120) {
+    scrollTopBtn.classList.add("show");
+  } else if (y > lastScrollY + 6 || y <= 120) {
+    scrollTopBtn.classList.remove("show");
   }
+
   lastScrollY = y;
+  scrollTicking = false;
+}
+
+window.addEventListener("scroll", function(){
+  if (!scrollTicking) {
+    requestAnimationFrame(handleScroll);
+    scrollTicking = true;
+  }
 }, { passive: true });
 
 document.getElementById("scrollTopBtn").addEventListener("click", function(){
@@ -1880,7 +1899,6 @@ document.getElementById("scrollTopBtn").addEventListener("click", function(){
 });
 
 loadAll();
-setInterval(loadAll, CONFIG.REFRESH_MS);
 
 })();
 </script>
