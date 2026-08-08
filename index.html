@@ -77,7 +77,7 @@ button,input,textarea,select{font-family:inherit;}
 }
 
 /* ==========================================================================
-   TOP BAR
+   TOP BAR (Виправлено під системні кнопки та шторку)
    ========================================================================== */
 .topbar-wrap{
   position:sticky; top: calc(env(safe-area-inset-top) + 10px); z-index:20;
@@ -163,16 +163,9 @@ button,input,textarea,select{font-family:inherit;}
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .topbar.scrolled .sub,
-.topbar.scrolled .avatar-chip {
-  display:none;
-  opacity:0;
-}
-.topbar.scrolled .gu-logo{
-  font-size:12px; 
-}
-.topbar.scrolled .head-actions {
-  opacity: 1;
-}
+.topbar.scrolled .avatar-chip { display:none; opacity:0; }
+.topbar.scrolled .gu-logo{ font-size:12px; }
+.topbar.scrolled .head-actions { opacity: 1; }
 
 /* ==========================================================================
    VIEWS
@@ -315,7 +308,7 @@ button,input,textarea,select{font-family:inherit;}
 .modal-desc{font-size:12px; color:var(--text-secondary); line-height:1.5; margin:0 0 12px; white-space:pre-wrap;}
 .modal-meta-row{display:flex; gap:12px; margin-bottom:14px; font-size:10px; color:var(--text-tertiary);}
 .modal-meta-row span{display:flex; align-items:center; gap:4px;}
-.modal-actions{display:flex; flex-direction:column; gap:8px;} /* Phone above Telegram */
+.modal-actions{display:flex; flex-direction:column; gap:8px;} /* Phone button above Telegram button */
 .modal-actions .btn{padding:12px; font-size:13px; border-radius:var(--radius-m);}
 
 /* Chat view */
@@ -695,7 +688,7 @@ const CONFIG = {
     items:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=1547315976&single=true&output=csv",
     admins:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=372060701&single=true&output=csv"
   },
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyzH3PlGk8iEbjik1-b6Jv7mtrgoMeSkal2nHGywathjoli9I0UCbFMlWiU7cb3Q2J3gA/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyzH3PlGk8iEbjik1-b6Jv7mtrgoMeSkal2nHGywathjoli9I0UCbFMlWiU7cb3Q2J3gA/exec", // СЮДИ ВСТАВТЕ ВАШ НОВИЙ URL З GOOGLE APPS SCRIPT
   WEEK_MS: 7 * 24 * 60 * 60 * 1000,
   POST_TTL_MS: 24 * 60 * 60 * 1000,
   REFRESH_MS: 15000, 
@@ -806,7 +799,7 @@ const savedFavorites = JSON.parse(localStorage.getItem("favorites_v1") || "[]");
 const savedDeleted = JSON.parse(localStorage.getItem("deleted_v1") || "[]"); 
 
 const state = {
-  banners: [], // Тепер зберігаємо тільки онлайн
+  banners: [], 
   items: [],
   admins: [],
   adminIds: new Set(),
@@ -814,7 +807,7 @@ const state = {
   clickLog: JSON.parse(localStorage.getItem("clickLog_v1") || "[]"),
   favorites: new Set(savedFavorites),
   deletedIds: new Set(savedDeleted),
-  inheritedTimers: [], // Залишок часу від видалених оголошень
+  inheritedTimers: [], 
   isAdmin: false,
   activeView: "home",
   activeCategory: "Усі",
@@ -871,20 +864,16 @@ async function loadAll(){
     fetchCsv(CONFIG.SHEETS.admins)
   ]);
   
-  // Беремо банери ТІЛЬКИ з гугл таблиці
   state.banners = banners.filter(function(b){ return b.title || b.img; });
-  
   state.admins = admins;
   state.adminIds = new Set(admins.map(a => String(a.telegram_id || "").trim()));
   
-  // Беремо ітеми ТІЛЬКИ з таблиці (ніяких локальних), виключаючи локально видалені (доки таблиця не оновиться)
   state.items = items
     .filter(function(it){ return it.title && !state.deletedIds.has(it.id || (it.user_id + "_" + it.created_at)); })
     .map(normalizeItem);
 
   state.isAdmin = state.adminIds.has(CURRENT_UID);
 
-  // Оновлюємо онлайн
   updateOnlineCount();
 
   if (isFirstLoad) {
@@ -932,7 +921,7 @@ async function callAppsScript(action, payload){
 }
 
 async function submitItem(item){
-  state.items.unshift(item); // Додаємо тимчасово доки не прийде з CSV
+  state.items.unshift(item); 
   const res = await callAppsScript("addItem", item);
   if (res && res.demo) {
     showToast("Оголошення додано (Демо)");
@@ -948,18 +937,18 @@ async function logClick(item, type){
   await callAppsScript("logClick", { item_id: item.id, type: type, user_id: CURRENT_UID });
 }
 
-// Видалення товару (Адміном або Власником)
 async function deleteItem(item, isOwnerDelete = false){
   state.deletedIds.add(item.id); 
   
   if (isOwnerDelete && isAlive(item)) {
-    // Зберігаємо таймер видаленого товару для наступного використання
     state.inheritedTimers.push(item.created_at);
   }
 
   state.items = state.items.filter(function(i){ return i.id !== item.id; });
   persistLocal();
-  await callAppsScript("deleteItem", { item_id: item.id });
+  
+  // Відправка з правильним ключем (item_id), який приймає Code.gs
+  await callAppsScript("deleteItem", { item_id: item.id, user_id: CURRENT_UID });
   showToast("Оголошення видалено");
   renderAll();
 }
@@ -1020,8 +1009,6 @@ function updateFavCounter() {
 }
 
 function updateOnlineCount() {
-  // Динамічна імітація онлайну (25-45) щоб здавалося живим, 
-  // або можна витягнути з GS якби там був лічильник сесій.
   const base = 25;
   const fluctuation = Math.floor(Math.sin(Date.now() / 10000) * 10) + 10; 
   document.getElementById("onlineCount").innerText = base + fluctuation;
@@ -1099,7 +1086,7 @@ function getAvatarHtml(photoUrl, name) {
 
 function renderRingChart(val, max, color, label) {
   const pct = max === 0 ? 0 : Math.min(100, Math.round((val/max)*100));
-  const dash = (pct * 37.7) / 100; // Довжина кола r=6 -> ~37.7
+  const dash = (pct * 37.7) / 100; 
   return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;">
     <svg width="40" height="40" viewBox="0 0 20 20">
       <circle cx="10" cy="10" r="6" fill="none" stroke="var(--border)" stroke-width="2"/>
@@ -1490,7 +1477,6 @@ function renderCreate(){
     btn.disabled = true; btn.textContent = "Збереження…";
 
     if (state.editModeId) {
-      // Редагування: заміняємо існуюче
       const itemIdx = state.items.findIndex(i => i.id === state.editModeId);
       if (itemIdx > -1) {
         state.items[itemIdx].title = title;
@@ -1504,10 +1490,9 @@ function renderCreate(){
       }
       state.editModeId = null;
     } else {
-      // Нове оголошення (спадкоємність таймера)
       let postTime = Date.now();
       if (state.inheritedTimers.length > 0) {
-        postTime = state.inheritedTimers.shift(); // Беремо таймер видаленого
+        postTime = state.inheritedTimers.shift();
         showToast("Успадковано час видаленого оголошення");
       }
       
@@ -1522,7 +1507,6 @@ function renderCreate(){
       await submitItem(item);
     }
     
-    // Очищення полів
     document.getElementById("fTitle").value = "";
     document.getElementById("fDesc").value = "";
     document.getElementById("fPrice").value = "";
@@ -1592,7 +1576,6 @@ function renderProfile(){
     const uniqueUsers = new Set(state.items.map(function(i){ return i.user_id; })).size;
     const activeItems = state.items.filter(isAlive).length;
     const totalClicksGlobal = state.items.reduce(function(s,i){ return s+i.clicks_phone+i.clicks_tg; }, 0);
-    const mockTotalViews = totalClicksGlobal * 5 + activeItems * 10;
     
     adminSlot.innerHTML =
       '<div class="admin-panel">' +
@@ -1628,18 +1611,20 @@ function renderProfile(){
       '</div>';
 
     const bannerListEl = document.getElementById("adminBannerList");
-    bannerListEl.innerHTML = state.banners.map((b, idx) => `
+    // ВАЖЛИВЕ ОНОВЛЕННЯ: Використовуємо ідентифікатори b.id для банерів
+    bannerListEl.innerHTML = state.banners.map((b) => `
       <div class="admin-item-row">
         <div class="info"><p class="t">${esc(b.title)}</p><p class="d">${esc(b.desc||'Постер')}</p></div>
-        <button class="icon-btn" data-delbanner="${idx}">${ICONS.trash}</button>
+        <button class="icon-btn" data-delbanner="${esc(b.id)}">${ICONS.trash}</button>
       </div>
     `).join("");
 
+    // ВАЖЛИВЕ ОНОВЛЕННЯ: Відправляємо запит з b.id для видалення
     bannerListEl.querySelectorAll("[data-delbanner]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.delbanner);
-        state.banners.splice(idx, 1);
-        callAppsScript("deleteBanner", { idx }); // Потрібно додати в AppsScript
+        const id = btn.dataset.delbanner;
+        state.banners = state.banners.filter(b => b.id !== id);
+        callAppsScript("deleteBanner", { id: id }); 
         showToast("Банер видалено");
         renderAll();
       });
@@ -1651,10 +1636,18 @@ function renderProfile(){
       const img = document.getElementById("bImg").value.trim();
       const link = document.getElementById("bLink").value.trim();
       if (!title || !img){ showToast("Заповніть назву та завантажте картинку"); return; }
-      const newBanner = { id: "b_" + Date.now(), title, desc, img, link };
+      const newBanner = { id: "b_" + Date.now(), title: title, desc: desc, img: img, link: link };
       state.banners.unshift(newBanner);
       await callAppsScript("addBanner", newBanner);
       showToast("Банер додано");
+      
+      // Очищення полів
+      document.getElementById("bTitle").value = "";
+      document.getElementById("bDesc").value = "";
+      document.getElementById("bImg").value = "";
+      document.getElementById("bLink").value = "";
+      document.getElementById("bImgStatus").innerText = "Файл не вибрано";
+      
       renderAll();
     });
 
