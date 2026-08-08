@@ -557,7 +557,7 @@ button,input,textarea,select{font-family:inherit;}
         <h1 id="topbarTitle" class="gu-logo">Global Ukraine</h1>
         <div class="sub" id="topbarSub">
            Оголошення поруч <br>
-           <span class="online-indicator"><span class="online-dot"></span><span id="onlineCount">--</span> онлайн</span>
+           <span class="online-indicator"><span class="online-dot"></span><span id="onlineCount">--</span> користувачів</span>
         </div>
       </div>
       <div class="head-actions">
@@ -734,7 +734,11 @@ const CONFIG = {
   SHEETS: {
     banners: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=1547638023&single=true&output=csv",
     items:   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=1547315976&single=true&output=csv",
-    admins:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=372060701&single=true&output=csv"
+    admins:  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5Dyb4jKXVMO71DuNIpl1QyPJFKssdMbpkd7nECJ1VKqjYzbjxnPWjw-rCXg7tKy9WWU7zHvv0qBmj/pub?gid=372060701&single=true&output=csv",
+    // Публікуйте лист "Categories" (Файл → Поділитися → Опублікувати в інтернеті → CSV)
+    // так само, як зроблено для banners/items/admins, і вставте посилання сюди.
+    // Якщо залишити PASTE_..., категорії просто працюватимуть локально (як і раніше).
+    categories: "PASTE_CATEGORIES_CSV_URL_HERE"
   },
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyzH3PlGk8iEbjik1-b6Jv7mtrgoMeSkal2nHGywathjoli9I0UCbFMlWiU7cb3Q2J3gA/exec", // СЮДИ ВСТАВТЕ ВАШ НОВИЙ URL З GOOGLE APPS SCRIPT
   WEEK_MS: 7 * 24 * 60 * 60 * 1000,
@@ -846,7 +850,6 @@ const savedCats = JSON.parse(localStorage.getItem("custom_categories_v1") || "nu
 const savedFavorites = JSON.parse(localStorage.getItem("favorites_v1") || "[]");
 const savedDeleted = JSON.parse(localStorage.getItem("deleted_v1") || "[]"); 
 
-// ВОТ ЭТИ ДВЕ СТРОКИ:
 const savedLocalItems = JSON.parse(localStorage.getItem("localItems_v1") || "[]");
 const savedLocalBanners = JSON.parse(localStorage.getItem("localBanners_v1") || "[]");
 
@@ -867,7 +870,9 @@ const state = {
   activeCategory: "Усі",
   newCatChoice: (savedCats || CONFIG.DEFAULT_CATEGORIES)[0],
   visibleCount: CONFIG.PAGE_SIZE,
-  editModeId: null
+  editModeId: null,
+  // Режим лічильника користувачів у шапці: "real" (реальний онлайн) або "sim" (плавна імітація)
+  onlineSettings: { mode: "real", simMin: 50, simMax: 5000 }
 };
 
 let isFirstLoad = true;
@@ -917,15 +922,29 @@ function fetchCsv(url){
 }
 
 async function loadAll(){
-  const [banners, items, admins] = await Promise.all([
+  const [banners, items, admins, categoryRows] = await Promise.all([
     fetchCsv(CONFIG.SHEETS.banners),
     fetchCsv(CONFIG.SHEETS.items),
-    fetchCsv(CONFIG.SHEETS.admins)
+    fetchCsv(CONFIG.SHEETS.admins),
+    fetchCsv(CONFIG.SHEETS.categories)
   ]);
   
   state.admins = admins;
   state.adminIds = new Set(admins.map(a => String(a.telegram_id || "").trim()));
   state.isAdmin = state.adminIds.has(CURRENT_UID);
+
+  // 0. Категорії, додані адміном через таблицю (Categories) — зливаємо з локальними
+  if (categoryRows && categoryRows.length) {
+    let catsChanged = false;
+    categoryRows.forEach(function(row){
+      const name = String(row.name || "").trim();
+      if (name && !state.categories.includes(name)) {
+        state.categories.push(name);
+        catsChanged = true;
+      }
+    });
+    if (catsChanged) persistLocal();
+  }
 
   // 1. Обробляємо товари з таблиці
   const sheetItems = items
@@ -1121,6 +1140,7 @@ function updateFavCounter() {
 }
 
 let lastKnownOnline = null;
+let lastKnownRealOnline = null;
 function updateOnlineCount() {
   const el = document.getElementById("onlineCount");
   if (!el) return;
@@ -1136,14 +1156,24 @@ async function sendHeartbeat(){
 }
 
 async function refreshOnlineCount(){
-  const res = await callAppsScript("getOnlineCount", {});
+  const res = await callAppsScript("getOnlineCount", { user_id: CURRENT_UID });
   if (res && typeof res.count === "number") {
     lastKnownOnline = res.count;
+    if (res.mode === "real" || res.mode === "sim") state.onlineSettings.mode = res.mode;
+    if (typeof res.simMin === "number") state.onlineSettings.simMin = res.simMin;
+    if (typeof res.simMax === "number") state.onlineSettings.simMax = res.simMax;
+    if (typeof res.realCount === "number") lastKnownRealOnline = res.realCount;
   } else if (lastKnownOnline === null) {
     // Backend not wired up yet (demo mode) — show just this device instead of a fake number
     lastKnownOnline = 1;
   }
   updateOnlineCount();
+  if (state.isAdmin) updateOnlineAdminUI();
+}
+
+function updateOnlineAdminUI(){
+  const hint = document.getElementById("realCountHint");
+  if (hint) hint.textContent = "Реальна кількість зараз: " + (lastKnownRealOnline === null ? "…" : lastKnownRealOnline);
 }
 
 function esc(s){
@@ -1713,7 +1743,7 @@ function renderProfile(){
 
   const adminSlot = document.getElementById("adminSlot");
   if (state.isAdmin){
-    const uniqueUsers = new Set(state.items.map(function(i){ return i.user_id; })).size;
+    const uniqueSellers = new Set(state.items.map(function(i){ return i.user_id; })).size;
     const activeItems = state.items.filter(isAlive).length;
     const totalClicksGlobal = state.items.reduce(function(s,i){ return s+i.clicks_phone+i.clicks_tg; }, 0);
     
@@ -1722,10 +1752,25 @@ function renderProfile(){
         '<div class="head">'+ICONS.shield+' Панель адміністратора</div>' +
         
         '<div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:16px;">' +
-          renderRingChart(uniqueUsers, 1000, 'var(--accent)', 'Юзерів') +
+          renderRingChart(uniqueSellers, 1000, 'var(--accent)', 'Продавців') +
           renderRingChart(activeItems, 500, 'var(--good)', 'Активних') +
           renderRingChart(totalClicksGlobal, 2000, 'var(--warn)', 'Кліків') +
         '</div>' +
+
+        '<p class="form-label" style="margin-top:10px;">Лічильник користувачів у шапці</p>' +
+        '<div class="cat-select-row" id="onlineModeRow">' +
+          '<div class="cat-opt" data-mode="real">Реальні онлайн</div>' +
+          '<div class="cat-opt" data-mode="sim">Імітація</div>' +
+        '</div>' +
+        '<div id="simRangeFields" style="display:none; margin-top:6px;">' +
+          '<div style="display:flex; gap:4px;">' +
+            '<div class="field" style="flex:1; margin:0;"><input id="simMinInput" type="number" min="0" placeholder="Від"></div>' +
+            '<div class="field" style="flex:1; margin:0;"><input id="simMaxInput" type="number" min="1" placeholder="До"></div>' +
+          '</div>' +
+          '<p class="hint">Число плавно "гуляє" в цьому діапазоні (крок кожні ~20 с)</p>' +
+        '</div>' +
+        '<p class="hint" id="realCountHint" style="margin-top:6px;">Реальна кількість зараз: —</p>' +
+        '<button class="submit-btn" id="saveOnlineSettingsBtn" style="padding:8px;font-size:12px;margin:8px 0 14px;">Зберегти налаштування лічильника</button>' +
 
         '<p class="form-label" style="margin-top:10px;">Додати банер-постер</p>' +
         '<div class="field"><input id="bTitle" type="text" placeholder="Заголовок банера"></div>' +
@@ -1750,6 +1795,58 @@ function renderProfile(){
         '<div id="adminItemList"></div>' +
       '</div>';
 
+    // --- Лічильник користувачів: заповнюємо стан та вішаємо обробники ---
+    const modeRow = document.getElementById("onlineModeRow");
+    const simFields = document.getElementById("simRangeFields");
+    const minInput = document.getElementById("simMinInput");
+    const maxInput = document.getElementById("simMaxInput");
+    minInput.value = state.onlineSettings.simMin;
+    maxInput.value = state.onlineSettings.simMax;
+
+    function syncOnlineModeUI(){
+      modeRow.querySelectorAll(".cat-opt").forEach(function(o){
+        o.classList.toggle("active", o.dataset.mode === state.onlineSettings.mode);
+      });
+      simFields.style.display = state.onlineSettings.mode === "sim" ? "block" : "none";
+    }
+    syncOnlineModeUI();
+    updateOnlineAdminUI();
+
+    modeRow.querySelectorAll(".cat-opt").forEach(function(opt){
+      opt.addEventListener("click", function(){
+        state.onlineSettings.mode = opt.dataset.mode;
+        syncOnlineModeUI();
+      });
+    });
+
+    document.getElementById("saveOnlineSettingsBtn").addEventListener("click", async function(){
+      const min = Number(minInput.value);
+      const max = Number(maxInput.value);
+      if (state.onlineSettings.mode === "sim" && (isNaN(min) || isNaN(max) || min < 0 || max <= min)) {
+        showToast("Вкажіть коректний діапазон: «До» має бути більше за «Від»");
+        return;
+      }
+      const payload = { mode: state.onlineSettings.mode, user_id: CURRENT_UID };
+      if (!isNaN(min) && !isNaN(max) && max > min) {
+        payload.simMin = min;
+        payload.simMax = max;
+      }
+      const res = await callAppsScript("setOnlineSettings", payload);
+      if (res && res.ok) {
+        if (res.settings) {
+          state.onlineSettings.mode = res.settings.mode;
+          state.onlineSettings.simMin = res.settings.simMin;
+          state.onlineSettings.simMax = res.settings.simMax;
+        }
+        showToast("Налаштування лічильника збережено");
+        refreshOnlineCount();
+      } else if (res && res.demo) {
+        showToast("Демо-режим: підключіть APPS_SCRIPT_URL, щоб зберегти на сервері");
+      } else {
+        showToast((res && res.error) || "Не вдалося зберегти налаштування");
+      }
+    });
+
     const bannerListEl = document.getElementById("adminBannerList");
     bannerListEl.innerHTML = state.banners.map((b) => `
       <div class="admin-item-row">
@@ -1765,7 +1862,7 @@ function renderProfile(){
         state.banners = state.banners.filter(b => b.id !== id);
         state.localBanners = state.localBanners.filter(b => b.id !== id);
         persistLocal();
-        callAppsScript("deleteBanner", { id: id }); 
+        callAppsScript("deleteBanner", { id: id, user_id: CURRENT_UID });
         showToast("Банер видалено");
         renderAll();
       });
@@ -1784,7 +1881,7 @@ function renderProfile(){
       state.banners.unshift(newBanner);
       persistLocal();
 
-      await callAppsScript("addBanner", newBanner);
+      await callAppsScript("addBanner", Object.assign({ user_id: CURRENT_UID }, newBanner));
       showToast("Банер додано");
       
       document.getElementById("bTitle").value = "";
@@ -1802,7 +1899,7 @@ function renderProfile(){
       if (state.categories.includes(name)) { showToast("Категорія вже існує"); return; }
       state.categories.push(name);
       persistLocal();
-      callAppsScript("addCategory", { name });
+      callAppsScript("addCategory", { name: name, user_id: CURRENT_UID });
       showToast("Категорію створено");
       renderAll();
     });
