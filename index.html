@@ -63,7 +63,7 @@ body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
   overscroll-behavior-y:none;
-  padding-top: 52px;
+  padding-top: 96px;
 }
 button,input,textarea,select{font-family:inherit;}
 ::-webkit-scrollbar{display:none;}
@@ -80,7 +80,7 @@ button,input,textarea,select{font-family:inherit;}
    TOP BAR (Виправлено під системні кнопки та шторку)
    ========================================================================== */
 .topbar-wrap{
-  position:sticky; top: calc(env(safe-area-inset-top) + 10px); z-index:20;
+  position:sticky; top: calc(env(safe-area-inset-top) + 54px); z-index:20;
   background:transparent;
   pointer-events:none; 
 }
@@ -234,7 +234,46 @@ button,input,textarea,select{font-family:inherit;}
   font-size:11px; font-weight:700; margin:4px 6px 2px; line-height:1.2; min-height:26px;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.mini-price{font-size:10.5px; font-weight:800; color:var(--accent); margin:0 6px 6px;}
+.mini-price{font-size:10.5px; font-weight:800; color:var(--accent); margin:0 6px 6px; display:flex; align-items:center; justify-content:space-between; gap:4px;}
+.mini-views{display:flex; align-items:center; gap:2px; font-size:9px; font-weight:700; color:var(--text-tertiary); flex:0 0 auto;}
+.mini-views svg{flex:0 0 auto;}
+.mini-sync{
+  position:absolute; top:4px; left:4px; z-index:2; display:flex; align-items:center; gap:3px;
+  background:rgba(34,158,217,0.85); backdrop-filter:blur(3px);
+  color:#fff; font-size:8px; font-weight:700; padding:2px 5px; border-radius:999px;
+}
+.mini-sync svg{animation:spin 1.4s linear infinite;}
+.sync-badge{
+  display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; color:var(--accent);
+  background:var(--accent-soft); padding:3px 7px; border-radius:999px; margin-top:4px;
+}
+.sync-badge svg{animation:spin 1.4s linear infinite;}
+
+/* ==========================================================================
+   SPLASH SCREEN
+   ========================================================================== */
+.splash-screen{
+  position:fixed; inset:0; z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--bg); overflow:hidden;
+  transition:opacity .4s ease, visibility .4s ease;
+}
+.splash-screen.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+.splash-blob{ position:absolute; border-radius:50%; filter:blur(70px); opacity:0.55; }
+.splash-blob.b1{ width:220px; height:220px; background:#FFD700; top:-40px; left:-40px; }
+.splash-blob.b2{ width:260px; height:260px; background:#0057B7; bottom:-60px; right:-40px; }
+.splash-logo{
+  font-family:'Press Start 2P', monospace; font-size:20px; position:relative; z-index:1;
+  background:linear-gradient(135deg, #FFD700 0%, #0057B7 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+  text-align:center; line-height:1.6; letter-spacing:1px;
+}
+.splash-spinner{
+  position:relative; z-index:1; width:30px; height:30px; margin-top:26px;
+  border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+.splash-hint{ position:relative; z-index:1; margin-top:14px; font-size:11px; color:var(--text-secondary); font-weight:600; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
 
 .load-more-wrap{margin-top:10px; display:flex; justify-content:center;}
 .load-more-btn{
@@ -501,6 +540,15 @@ button,input,textarea,select{font-family:inherit;}
 </style>
 </head>
 <body>
+
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-blob b1"></div>
+  <div class="splash-blob b2"></div>
+  <p class="splash-logo">Global<br>Ukraine</p>
+  <div class="splash-spinner"></div>
+  <p class="splash-hint">Завантаження оголошень…</p>
+</div>
+
 <div id="app">
 
   <div class="topbar-wrap">
@@ -853,6 +901,8 @@ const ICONS = {
   heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
   edit: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
   refresh: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+  eye: '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+  sync: '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0020.49 15"/></svg>',
 };
 
 function fetchCsv(url){
@@ -901,10 +951,21 @@ async function loadAll(){
   if (isFirstLoad) {
     renderAll();
     isFirstLoad = false;
+    hideSplash();
   } else {
     softUpdate();
   }
 }
+
+let splashHidden = false;
+function hideSplash(){
+  if (splashHidden) return;
+  splashHidden = true;
+  const el = document.getElementById("splashScreen");
+  if (el) el.classList.add("hidden");
+}
+// Safety net: never trap the user behind the splash if the sheet is slow/unreachable
+setTimeout(hideSplash, 7000);
 
 function normalizeItem(raw){
   return {
@@ -920,8 +981,13 @@ function normalizeItem(raw){
     user_photo: raw.user_photo || "", 
     created_at: Number(raw.created_at) || Date.parse(raw.created_at) || Date.now(),
     clicks_phone: Number(raw.clicks_phone || raw.clicks || 0) || 0,
-    clicks_tg: Number(raw.clicks_tg || 0) || 0
+    clicks_tg: Number(raw.clicks_tg || 0) || 0,
+    views: Number(raw.views || 0) || 0
   };
+}
+
+function isPendingSync(item){
+  return state.localItems.some(function(li){ return li.id === item.id; });
 }
 
 function getImages(item){
@@ -951,7 +1017,7 @@ async function submitItem(item){
   if (res && res.demo) {
     showToast("Оголошення додано (Демо)");
   } else {
-    showToast("Оголошення опубліковано");
+    showToast("Опубліковано! Вже видно вам, іншим — протягом ~10 хв");
   }
 }
 
@@ -960,6 +1026,15 @@ async function logClick(item, type){
   state.clickLog.push({ item_id: item.id, type: type, ts: Date.now(), by: CURRENT_UID });
   persistLocal();
   await callAppsScript("logClick", { item_id: item.id, type: type, user_id: CURRENT_UID });
+}
+
+const viewedThisSession = new Set(JSON.parse(sessionStorage.getItem("viewed_session_v1") || "[]"));
+async function logView(item){
+  if (viewedThisSession.has(item.id)) return;
+  viewedThisSession.add(item.id);
+  sessionStorage.setItem("viewed_session_v1", JSON.stringify(Array.from(viewedThisSession)));
+  item.views = (item.views || 0) + 1;
+  await callAppsScript("logView", { item_id: item.id, user_id: CURRENT_UID });
 }
 
 async function deleteItem(item, isOwnerDelete = false){
@@ -977,6 +1052,18 @@ async function deleteItem(item, isOwnerDelete = false){
   showToast("Оголошення видалено");
   renderAll();
 }
+
+window.confirmDeleteItem = function(itemId){
+  const item = state.items.find(function(i){ return i.id === itemId; });
+  if (!item) { showToast("Оголошення вже видалено"); renderProfile(); return; }
+  const doDelete = function(){ deleteItem(item, true); };
+  const msg = "Видалити оголошення «" + item.title + "»?";
+  if (tg && tg.showConfirm) {
+    tg.showConfirm(msg, function(confirmed){ if (confirmed) doDelete(); });
+  } else if (window.confirm(msg)) {
+    doDelete();
+  }
+};
 
 window.repostItem = async function(itemId) {
   const item = state.items.find(i => i.id === itemId);
@@ -1033,10 +1120,30 @@ function updateFavCounter() {
   }
 }
 
+let lastKnownOnline = null;
 function updateOnlineCount() {
-  const base = 25;
-  const fluctuation = Math.floor(Math.sin(Date.now() / 10000) * 10) + 10; 
-  document.getElementById("onlineCount").innerText = base + fluctuation;
+  const el = document.getElementById("onlineCount");
+  if (!el) return;
+  if (lastKnownOnline !== null) {
+    el.innerText = lastKnownOnline;
+  } else {
+    el.innerText = "…";
+  }
+}
+
+async function sendHeartbeat(){
+  await callAppsScript("heartbeat", { user_id: CURRENT_UID });
+}
+
+async function refreshOnlineCount(){
+  const res = await callAppsScript("getOnlineCount", {});
+  if (res && typeof res.count === "number") {
+    lastKnownOnline = res.count;
+  } else if (lastKnownOnline === null) {
+    // Backend not wired up yet (demo mode) — show just this device instead of a fake number
+    lastKnownOnline = 1;
+  }
+  updateOnlineCount();
 }
 
 function esc(s){
@@ -1240,15 +1347,21 @@ function itemCardMiniHtml(item){
   const thumb = imgs[0];
   const alive = isAlive(item);
   const t = fmtClock(timeLeftMs(item));
+  const pending = isPendingSync(item);
   return '<div class="item-card-mini" data-id="'+esc(item.id)+'">' +
     '<div class="mini-media">' +
       (thumb ? '<img src="'+esc(thumb)+'" alt="" loading="lazy">' : '<div class="noimg">'+ICONS.image+'</div>') +
-      (alive ? '<div class="mini-ttl">'+(t === "∞" ? "Назавжди" : t)+'</div>' : '') +
+      (pending
+        ? '<div class="mini-sync">'+ICONS.sync+' Синхронізація</div>'
+        : (alive ? '<div class="mini-ttl">'+(t === "∞" ? "Назавжди" : t)+'</div>' : '')) +
       '<button class="mini-heart" data-heart="'+esc(item.id)+'">'+(isFav(item.id)?ICONS.heartFilled:ICONS.heart)+'</button>' +
       '<div class="mini-cat">'+esc(item.category)+'</div>' +
     '</div>' +
     '<p class="mini-title">'+esc(item.title)+'</p>' +
-    (item.price ? '<p class="mini-price">'+esc(item.price)+'</p>' : '') +
+    '<p class="mini-price">' +
+      (item.price ? '<span>'+esc(item.price)+'</span>' : '<span></span>') +
+      '<span class="mini-views">'+ICONS.eye+' '+(item.views||0)+'</span>' +
+    '</p>' +
   '</div>';
 }
 
@@ -1341,6 +1454,7 @@ function openItemModal(item){
         (item.desc ? '<p class="modal-desc">'+esc(item.desc)+'</p>' : '') +
         '<div class="modal-meta-row">' +
           '<span>'+ICONS.clock+' '+timeAgo(item.created_at)+'</span>' +
+          '<span>'+ICONS.eye+' '+(item.views||0)+' переглядів</span>' +
           '<span>'+ICONS.clicks+' '+(item.clicks_phone+item.clicks_tg)+' контактів</span>' +
         '</div>' +
         '<div class="modal-actions">' +
@@ -1351,6 +1465,7 @@ function openItemModal(item){
     '</div>';
 
   overlay.classList.add("active");
+  logView(item);
 
   setTimeout(() => {
     document.getElementById("modalBackdrop").addEventListener("click", closeItemModal);
@@ -1568,13 +1683,12 @@ function renderProfile(){
       const alive = isAlive(i);
       const thumb = getImages(i)[0];
       const t = fmtClock(timeLeftMs(i));
-      const mockViews = (i.clicks_phone + i.clicks_tg) * 4 + Math.floor((Date.now() - i.created_at)/3600000); 
-      
+      const pending = isPendingSync(i);
       let actionButtons = '';
       if (alive) {
         actionButtons = `
           <button class="btn btn-outline" style="flex:1" onclick="editItem('${i.id}')">${ICONS.edit} Редагувати</button>
-          <button class="btn btn-outline" style="flex:1; color:var(--bad); border-color:var(--bad);" onclick="deleteItem({id:'${i.id}', created_at:${i.created_at}}, true)">${ICONS.trash} Видалити</button>
+          <button class="btn btn-outline" style="flex:1; color:var(--bad); border-color:var(--bad);" onclick="confirmDeleteItem('${i.id}')">${ICONS.trash} Видалити</button>
         `;
       } else {
         actionButtons = `
@@ -1588,7 +1702,8 @@ function renderProfile(){
           (thumb ? '<img src="'+esc(thumb)+'">' : '<div style="width:48px;height:48px;border-radius:8px;background:var(--accent-soft);flex:0 0 auto;display:flex;align-items:center;justify-content:center;">'+ICONS.image+'</div>') +
           '<div class="info"><p class="t">'+esc(i.title)+'</p>' +
           '<p class="d"><span class="status-dot '+(alive?"live":"dead")+'"></span>'+(alive?(t==="∞"?"Назавжди":"Активне · "+t+" лишилось"):"Завершено")+'</p>' +
-          '<div class="stats">👁 '+(mockViews>0?mockViews:0)+' переглядів · 📞 '+(i.clicks_phone+i.clicks_tg)+' кліків</div>' +
+          '<div class="stats">'+ICONS.eye+' '+(i.views||0)+' переглядів · 📞 '+(i.clicks_phone+i.clicks_tg)+' кліків</div>' +
+          (pending ? '<span class="sync-badge">'+ICONS.sync+' Синхронізується (до 10 хв)</span>' : '') +
           '</div>' +
         '</div>' +
         '<div class="mine-actions">' + actionButtons + '</div>' +
@@ -1845,12 +1960,24 @@ function renderAll(){
   if (state.activeView === "chat") renderChat();
 }
 
+let lastItemsSignature = "";
+let lastBannersSignature = "";
 function softUpdate() {
   renderTopbar();
   if (state.activeView === "home" || !state.activeView) {
-    renderBanners();
-    renderChips();
-    renderItemGrid();
+    const bannersSig = state.banners.map(function(b){ return b.id; }).join(",");
+    if (bannersSig !== lastBannersSignature) {
+      lastBannersSignature = bannersSig;
+      renderBanners();
+    }
+    const itemsSig = state.items.map(function(i){
+      return i.id + ":" + i.clicks_phone + ":" + i.clicks_tg + ":" + i.views + ":" + isPendingSync(i);
+    }).join("|");
+    if (itemsSig !== lastItemsSignature) {
+      lastItemsSignature = itemsSig;
+      renderChips();
+      renderItemGrid();
+    }
   }
   if (state.activeView === "chat") {
     renderChat();
@@ -1858,6 +1985,7 @@ function softUpdate() {
 }
 
 setInterval(function(){
+  if (document.hidden || state.activeView !== "home") return;
   document.querySelectorAll(".mini-ttl").forEach(function(el){
     const card = el.closest(".item-card-mini");
     if (!card) return;
@@ -1869,7 +1997,33 @@ setInterval(function(){
   });
 }, 1000);
 
-setInterval(loadAll, CONFIG.REFRESH_MS);
+let dataRefreshTimer = null;
+let heartbeatTimer = null;
+let onlineCountTimer = null;
+
+function startBackgroundTimers(){
+  if (!dataRefreshTimer) dataRefreshTimer = setInterval(loadAll, CONFIG.REFRESH_MS);
+  if (!heartbeatTimer) heartbeatTimer = setInterval(sendHeartbeat, 25000);
+  if (!onlineCountTimer) onlineCountTimer = setInterval(refreshOnlineCount, 20000);
+}
+function stopBackgroundTimers(){
+  clearInterval(dataRefreshTimer); dataRefreshTimer = null;
+  clearInterval(heartbeatTimer); heartbeatTimer = null;
+  clearInterval(onlineCountTimer); onlineCountTimer = null;
+}
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden) {
+    stopBackgroundTimers();
+  } else {
+    startBackgroundTimers();
+    loadAll();
+    sendHeartbeat();
+    refreshOnlineCount();
+  }
+});
+startBackgroundTimers();
+sendHeartbeat();
+refreshOnlineCount();
 
 let lastScrollY = window.scrollY || 0;
 let scrollTicking = false;
