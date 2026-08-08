@@ -798,9 +798,15 @@ const savedCats = JSON.parse(localStorage.getItem("custom_categories_v1") || "nu
 const savedFavorites = JSON.parse(localStorage.getItem("favorites_v1") || "[]");
 const savedDeleted = JSON.parse(localStorage.getItem("deleted_v1") || "[]"); 
 
+// ВОТ ЭТИ ДВЕ СТРОКИ:
+const savedLocalItems = JSON.parse(localStorage.getItem("localItems_v1") || "[]");
+const savedLocalBanners = JSON.parse(localStorage.getItem("localBanners_v1") || "[]");
+
 const state = {
   banners: [], 
   items: [],
+  localItems: savedLocalItems,       // Тимчасове сховище для нових товарів
+  localBanners: savedLocalBanners,   // Тимчасове сховище для нових банерів
   admins: [],
   adminIds: new Set(),
   categories: savedCats || CONFIG.DEFAULT_CATEGORIES,
@@ -818,7 +824,10 @@ const state = {
 
 let isFirstLoad = true;
 
+// Оновлюємо функцію persistLocal, щоб вона зберігала ці тимчасові масиви
 function persistLocal(){
+  localStorage.setItem("localItems_v1", JSON.stringify(state.localItems));
+  localStorage.setItem("localBanners_v1", JSON.stringify(state.localBanners));
   localStorage.setItem("clickLog_v1", JSON.stringify(state.clickLog));
   localStorage.setItem("custom_categories_v1", JSON.stringify(state.categories));
   localStorage.setItem("deleted_v1", JSON.stringify(Array.from(state.deletedIds)));
@@ -864,15 +873,28 @@ async function loadAll(){
     fetchCsv(CONFIG.SHEETS.admins)
   ]);
   
-  state.banners = banners.filter(function(b){ return b.title || b.img; });
   state.admins = admins;
   state.adminIds = new Set(admins.map(a => String(a.telegram_id || "").trim()));
-  
-  state.items = items
-    .filter(function(it){ return it.title && !state.deletedIds.has(it.id || (it.user_id + "_" + it.created_at)); })
-    .map(normalizeItem);
-
   state.isAdmin = state.adminIds.has(CURRENT_UID);
+
+  // 1. Обробляємо товари з таблиці
+  const sheetItems = items
+    .filter(it => it.title && !state.deletedIds.has(it.id || (it.user_id + "_" + it.created_at)))
+    .map(normalizeItem);
+  const sheetItemIds = new Set(sheetItems.map(i => i.id));
+
+  // 2. Обробляємо банери з таблиці
+  const sheetBanners = banners.filter(b => (b.title || b.img) && !state.deletedIds.has(b.id));
+  const sheetBannerIds = new Set(sheetBanners.map(b => b.id));
+
+  // 3. ЧИСТИМО КЕШ: видаляємо з локального сховища те, що вже з'явилося у CSV таблиці
+  state.localItems = state.localItems.filter(i => !sheetItemIds.has(i.id) && !state.deletedIds.has(i.id));
+  state.localBanners = state.localBanners.filter(b => !sheetBannerIds.has(b.id) && !state.deletedIds.has(b.id));
+  persistLocal();
+
+  // 4. Зливаємо таблицю та тимчасовий кеш для відображення
+  state.items = state.localItems.concat(sheetItems);
+  state.banners = state.localBanners.concat(sheetBanners);
 
   updateOnlineCount();
 
@@ -921,7 +943,10 @@ async function callAppsScript(action, payload){
 }
 
 async function submitItem(item){
-  state.items.unshift(item); 
+  state.localItems.unshift(item); // Закидуємо в тимчасовий кеш
+  state.items.unshift(item);      // Одразу показуємо юзеру
+  persistLocal();                 // Зберігаємо
+
   const res = await callAppsScript("addItem", item);
   if (res && res.demo) {
     showToast("Оголошення додано (Демо)");
@@ -1611,7 +1636,6 @@ function renderProfile(){
       '</div>';
 
     const bannerListEl = document.getElementById("adminBannerList");
-    // ВАЖЛИВЕ ОНОВЛЕННЯ: Використовуємо ідентифікатори b.id для банерів
     bannerListEl.innerHTML = state.banners.map((b) => `
       <div class="admin-item-row">
         <div class="info"><p class="t">${esc(b.title)}</p><p class="d">${esc(b.desc||'Постер')}</p></div>
@@ -1619,11 +1643,13 @@ function renderProfile(){
       </div>
     `).join("");
 
-    // ВАЖЛИВЕ ОНОВЛЕННЯ: Відправляємо запит з b.id для видалення
     bannerListEl.querySelectorAll("[data-delbanner]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.dataset.delbanner;
+        state.deletedIds.add(id); // Обов'язково додаємо у видалені
         state.banners = state.banners.filter(b => b.id !== id);
+        state.localBanners = state.localBanners.filter(b => b.id !== id);
+        persistLocal();
         callAppsScript("deleteBanner", { id: id }); 
         showToast("Банер видалено");
         renderAll();
@@ -1636,12 +1662,16 @@ function renderProfile(){
       const img = document.getElementById("bImg").value.trim();
       const link = document.getElementById("bLink").value.trim();
       if (!title || !img){ showToast("Заповніть назву та завантажте картинку"); return; }
+      
       const newBanner = { id: "b_" + Date.now(), title: title, desc: desc, img: img, link: link };
+      
+      state.localBanners.unshift(newBanner); // Закидуємо в тимчасовий кеш
       state.banners.unshift(newBanner);
+      persistLocal();
+
       await callAppsScript("addBanner", newBanner);
       showToast("Банер додано");
       
-      // Очищення полів
       document.getElementById("bTitle").value = "";
       document.getElementById("bDesc").value = "";
       document.getElementById("bImg").value = "";
